@@ -1,6 +1,0 @@
-﻿  MainGame.cpp
-C:\Users\Grace Johnson\source\repos\PlatformerGame\PlatformerGame\MainGame.cpp(105,33): warning C4305: '=': truncation from 'double' to 'float'
-C:\Users\Grace Johnson\source\repos\PlatformerGame\PlatformerGame\MainGame.cpp(205,19): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\Grace Johnson\source\repos\PlatformerGame\PlatformerGame\MainGame.cpp(222,17): warning C4305: '+=': truncation from 'double' to 'float'
-C:\Users\Grace Johnson\source\repos\PlatformerGame\PlatformerGame\MainGame.cpp(226,17): warning C4305: '-=': truncation from 'double' to 'float'
-  PlatformerGame.vcxproj -> C:\Users\Grace Johnson\source\repos\PlatformerGame\x64\Debug\PlatformerGame.exe
