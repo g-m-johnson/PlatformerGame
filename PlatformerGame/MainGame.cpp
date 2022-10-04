@@ -31,7 +31,7 @@ struct GameState
 {
 	Point2f startingPoint = { 120, 184 };
 	PlayerState playerState = STATE_WALK;
-	bool direction = true; //true = right
+	bool direction = false; //true = left, false = right
 };
 GameState gameState;
 
@@ -89,6 +89,15 @@ int MainGameExit(void)
 void HandlePlayerControls()
 {
 	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
+
+	if (obj_player.pos.x - obj_player.oldPos.x <= 0)
+	{
+		gameState.direction = true;
+	}
+	else
+	{
+		gameState.direction = false;
+	}
 
 	bool onSolidGround = PlayerAndPlatformCollision();
 	if (onSolidGround == false)
@@ -194,41 +203,54 @@ void SwingMechanic()
 
 	Play::DrawLine(obj_player.pos, obj_anchor.pos, Play::cWhite);
 	float ropeLength = obj_anchor.radius + obj_player.radius + 10;
-	float dx = obj_player.pos.x - obj_anchor.pos.x;
+	float dx = obj_anchor.pos.x - obj_player.pos.x;
 	float dy = obj_player.pos.y - obj_anchor.pos.y;
-	float theta = atan(dx / dy);
+	float theta = atan(dy / dx);
+	
 
-	//obj_player.velocity = { 0,0 };
-
-	if (Play::IsColliding(obj_player, obj_anchor))
+	if (!Play::IsColliding(obj_player, obj_anchor))
 	{
-		obj_player.pos.x = obj_anchor.pos.x;
-		obj_player.pos.y = obj_anchor.pos.y + ropeLength;
 		obj_player.velocity = { 0, 0 };
 		obj_player.acceleration = { 0, 0 };
+		if (dy < 50)
+		{
+			gameState.direction = !gameState.direction;
+		}
+
+		if (gameState.direction == false)
+		{
+			theta += 0.04;
+		}
+		else
+		{
+			theta -= 0.04;
+		}
+
+		if (obj_player.pos.x <= obj_anchor.pos.x)
+		{
+			obj_player.pos.x = obj_anchor.pos.x - ropeLength * cos(theta);
+			obj_player.pos.y = obj_anchor.pos.y + ropeLength * sin(theta);
+		}
+		else
+		{
+			obj_player.pos.x = obj_anchor.pos.x + ropeLength * cos(theta);
+			obj_player.pos.y = obj_anchor.pos.y - ropeLength * sin(theta);
+		}
+
 	}
 
-	if (Play::KeyPressed(VK_RIGHT))
-	{
-		float v_tot = 3.;
-		obj_player.velocity.x = (v_tot) * cos(theta);
-		obj_player.velocity.y = -(v_tot) * sin(theta);
-		
-		
-	}
-	if (Play::KeyPressed(VK_LEFT))
-	{
-		float v_tot = -3.;
-		obj_player.velocity.x = (v_tot)*cos(theta);
-		obj_player.velocity.y = -(v_tot)*sin(theta);
-
-	}
-	//obj_player.pos.x = obj_player.oldPos.x + obj_player.velocity.x * 0.017;
-	//obj_player.pos.y = obj_player.oldPos.y + obj_player.velocity.y * 0.017;
 
 	if (Play::KeyPressed(VK_SPACE))
 	{
 		gameState.playerState = STATE_JUMP;
+		if (gameState.direction == true)
+		{
+			obj_player.velocity.x = -4;
+		}
+		else
+		{
+			obj_player.velocity.x = 4;
+		}
 	}
 }
 
@@ -241,11 +263,6 @@ void UpdatePlayer()
 	{
 		gameState.playerState = STATE_DEAD;
 	}
-
-	if (obj_player.pos.x - obj_player.oldPos.x <= 0)
-		gameState.direction = false;
-	if (obj_player.pos.x - obj_player.oldPos.x >= 0)
-		gameState.direction = true;
 
 	switch (gameState.playerState)
 	{
