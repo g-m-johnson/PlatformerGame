@@ -17,6 +17,7 @@ enum GameObjectType
 	TYPE_PLAYER,
 	TYPE_PLATFORM,
 	TYPE_ANCHORPOINT,
+	TYPE_AMMO,
 };
 
 enum PlayerState
@@ -48,6 +49,7 @@ void UpdatePlayer();
 void SwingMechanic();
 void CreateAnchor();
 void UpdateAnchor();
+void DrawTarget();
 
 
 
@@ -71,6 +73,8 @@ bool MainGameUpdate(float elapsedTime)
 	TempCursorPos();
 	UpdateAnchor();
 	UpdatePlayer();
+	Point2f camPos = Play::GetCameraPosition();
+	Play::DrawFontText("64px", std::to_string(camPos.x) + ", " + std::to_string(camPos.y), {20, 20});
 	Play::PresentDrawingBuffer();
 	return Play::KeyDown(VK_ESCAPE);
 }
@@ -117,25 +121,25 @@ void HandlePlayerControls()
 
 	if (Play::KeyDown(VK_LEFT))
 	{
-		obj_player.velocity.x = -4;
+		obj_player.velocity.x = -6;
 	}
 	if (Play::KeyDown(VK_RIGHT))
 	{
-		obj_player.velocity.x = 4;
+		obj_player.velocity.x = 6;
 	}
 
 }
 
 void CreatePlatforms()
 {
-	std::vector <int> vPlatforms(5);
 	std::vector< std::vector<float>> platformPositions{
+		{-250, 500},
 		{70., 345.},
 		{335., 196.},
-		{400., 500.},
-		{630., 420.},
-		{950., 427.}
+		{950., 427.},
+		{1230., 427.}
 	};
+	std::vector <int> vPlatforms(platformPositions.size());
 
 	int n = 0;
 	for (int id : vPlatforms)
@@ -161,7 +165,8 @@ void UpdatePlatforms()
 void TempCursorPos()
 {
 	Point2D mousePos = Play::GetMousePos();
-	Play::DrawFontText("64px", std::to_string(mousePos.x) + ", " + std::to_string(mousePos.y), mousePos);
+	Point2D camPos = Play::GetCameraPosition();
+	Play::DrawFontText("64px", std::to_string(camPos.x + mousePos.x) + ", " + std::to_string(mousePos.y), mousePos);
 }
 
 bool PlayerAndPlatformCollision()
@@ -212,7 +217,7 @@ void SwingMechanic()
 	{
 		obj_player.velocity = { 0, 0 };
 		obj_player.acceleration = { 0, 0 };
-		if (dy < 50)
+		if (dy < 100)
 		{
 			gameState.direction = !gameState.direction;
 		}
@@ -254,10 +259,53 @@ void SwingMechanic()
 	}
 }
 
+void DrawTarget()
+{
+	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
+	Point2D mousePos = Play::GetMousePos();
+	Point2D camPos = Play::GetCameraPosition();
+	float dx = (camPos.x + mousePos.x) - obj_player.pos.x;
+	float dy = mousePos.y - obj_player.pos.y;
+	float theta = atan(dy / dx);
+
+	Point2D targetPoint = { obj_player.pos.x + (100 * cos(theta)),
+			obj_player.pos.y + (100 * sin(theta)) };
+	if ((mousePos.x + camPos.x) < obj_player.pos.x)
+	{
+		targetPoint = { obj_player.pos.x - (100 * cos(theta)),
+			obj_player.pos.y - (100 * sin(theta)) };
+	}
+
+	Play::DrawCircle(targetPoint, 10, Play::cBlack);
+	Play::DrawLine({targetPoint.x + 13, targetPoint.y}, 
+		{targetPoint.x - 13, targetPoint.y}, Play::cBlack);
+	Play::DrawLine({ targetPoint.x, targetPoint.y + 13 },
+		{ targetPoint.x, targetPoint.y - 13 }, Play::cBlack);
+
+
+	if (Play::GetMouseButton(Play::LEFT))
+	{
+		int id = Play::CreateGameObject(TYPE_AMMO, obj_player.pos, 5, "ammo");
+		GameObject& obj_ammo = Play::GetGameObject(id);
+		Play::SetGameObjectDirection(obj_ammo, 8, theta);
+	}
+}
+
+void UpdateAmmo()
+{
+	std::vector<int> vAmmo{ Play::CollectGameObjectIDsByType(TYPE_AMMO) };
+	//for (int id:vAmmo)
+}
+
 void UpdatePlayer()
 {
 	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
 	GameObject& obj_anchor = Play::GetGameObjectByType(TYPE_ANCHORPOINT);
+
+	if (obj_player.pos.x >= 800)
+	{
+		Play::SetCameraPosition({ obj_player.pos.x - (DISPLAY_WIDTH / 2), 0 });
+	}
 
 	if (Play::IsLeavingDisplayArea(obj_player, Play::VERTICAL) && obj_player.pos.y > 700)
 	{
@@ -268,6 +316,7 @@ void UpdatePlayer()
 	{
 	case STATE_WALK:
 		HandlePlayerControls();
+		DrawTarget();
 		break;
 
 	case STATE_JUMP:
