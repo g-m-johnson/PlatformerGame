@@ -18,6 +18,8 @@ enum GameObjectType
 	TYPE_PLATFORM,
 	TYPE_ANCHORPOINT,
 	TYPE_AMMO,
+	TYPE_ENEMY,
+	TYPE_DEADENEMY,
 };
 
 enum PlayerState
@@ -30,6 +32,7 @@ enum PlayerState
 
 struct GameState
 {
+	int playerHP = 100;
 	Point2f startingPoint = { 120, 184 };
 	PlayerState playerState = STATE_WALK;
 	bool direction = false; //true = left, false = right
@@ -50,7 +53,9 @@ void SwingMechanic();
 void CreateAnchor();
 void UpdateAnchor();
 void DrawTarget();
-
+void UpdateAmmo();
+void UpdateEnemyMovementOnPlatform();
+void CreateEnemies();
 
 
 
@@ -59,22 +64,28 @@ void DrawTarget();
 void MainGameEntry(PLAY_IGNORE_COMMAND_LINE)
 {
 	Play::CreateManager(DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_SCALE);
+	Play::LoadBackground("Data\\Background\\city.png");
 	Play::CreateGameObject(TYPE_PLAYER, gameState.startingPoint, 25, "player");
 	Play::CentreSpriteOrigin("player");
 	Play::CentreSpriteOrigin("anchor");
+	Play::CentreSpriteOrigin("enemy");
 	CreatePlatforms();
 	CreateAnchor();
+	CreateEnemies();
 }
 
 bool MainGameUpdate(float elapsedTime)
 {
-	Play::ClearDrawingBuffer(Play::cYellow);
+	//Play::ClearDrawingBuffer(Play::cYellow);
+	Play::DrawBackground();
 	UpdatePlatforms();
-	TempCursorPos();
+	//TempCursorPos();
 	UpdateAnchor();
 	UpdatePlayer();
-	Point2f camPos = Play::GetCameraPosition();
-	Play::DrawFontText("64px", std::to_string(camPos.x) + ", " + std::to_string(camPos.y), {20, 20});
+	UpdateAmmo();
+	UpdateEnemyMovementOnPlatform();
+	//Point2f camPos = Play::GetCameraPosition();
+	//Play::DrawFontText("64px", std::to_string(camPos.x) + ", " + std::to_string(camPos.y), {20, 20});
 	Play::PresentDrawingBuffer();
 	return Play::KeyDown(VK_ESCAPE);
 }
@@ -132,12 +143,14 @@ void HandlePlayerControls()
 
 void CreatePlatforms()
 {
-	std::vector< std::vector<float>> platformPositions{
-		{-250, 500},
+	std::vector<std::vector<float>> platformPositions{
 		{70., 345.},
 		{335., 196.},
 		{950., 427.},
-		{1230., 427.}
+		{1230., 427.},
+		{1740., 680.},
+		{1940., 680.},
+		{1260., 680.}
 	};
 	std::vector <int> vPlatforms(platformPositions.size());
 
@@ -259,6 +272,7 @@ void SwingMechanic()
 	}
 }
 
+bool cursorReleased = true;
 void DrawTarget()
 {
 	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
@@ -276,25 +290,57 @@ void DrawTarget()
 			obj_player.pos.y - (100 * sin(theta)) };
 	}
 
-	Play::DrawCircle(targetPoint, 10, Play::cBlack);
+	Play::DrawCircle(targetPoint, 10, Play::cWhite);
 	Play::DrawLine({targetPoint.x + 13, targetPoint.y}, 
-		{targetPoint.x - 13, targetPoint.y}, Play::cBlack);
+		{targetPoint.x - 13, targetPoint.y}, Play::cWhite);
 	Play::DrawLine({ targetPoint.x, targetPoint.y + 13 },
-		{ targetPoint.x, targetPoint.y - 13 }, Play::cBlack);
+		{ targetPoint.x, targetPoint.y - 13 }, Play::cWhite);
 
 
-	if (Play::GetMouseButton(Play::LEFT))
+	if (Play::GetMouseButton(Play::LEFT) && cursorReleased == true)
 	{
 		int id = Play::CreateGameObject(TYPE_AMMO, obj_player.pos, 5, "ammo");
 		GameObject& obj_ammo = Play::GetGameObject(id);
-		Play::SetGameObjectDirection(obj_ammo, 8, theta);
+
+		if (targetPoint.x >= obj_player.pos.x)
+		{
+			Play::SetGameObjectDirection(obj_ammo, 8, theta + PLAY_PI / 2);
+		}
+		else
+		{
+			Play::SetGameObjectDirection(obj_ammo, 8, theta - PLAY_PI/2);
+		}
+		cursorReleased = false;		
+	}
+	if (Play::GetMouseButton(Play::LEFT) == false)
+	{
+		cursorReleased = true;
 	}
 }
 
 void UpdateAmmo()
 {
-	std::vector<int> vAmmo{ Play::CollectGameObjectIDsByType(TYPE_AMMO) };
-	//for (int id:vAmmo)
+	std::vector<int> vAmmo = Play::CollectGameObjectIDsByType(TYPE_AMMO);
+	//GameObject& obj_enemy = Play::GetGameObjectByType(TYPE_ENEMY);
+	for (int id : vAmmo)
+	{
+		GameObject& obj_ammo = Play::GetGameObject(id);
+		/*
+		if (Play::IsColliding(obj_ammo, obj_enemy));
+		{
+			obj_enemy.type = TYPE_DEADENEMY;
+			Play::DestroyGameObject(id);
+		}*/
+		Play::UpdateGameObject(obj_ammo);
+		Play::DrawObject(obj_ammo);
+
+		if (!Play::IsVisible(obj_ammo))
+		{
+			Play::DestroyGameObject(id);
+		}
+
+		
+	}
 }
 
 void UpdatePlayer()
@@ -332,6 +378,7 @@ void UpdatePlayer()
 
 	case STATE_DEAD:
 		obj_player.pos = gameState.startingPoint;
+		Play::SetCameraPosition({ 0, 0 });
 		gameState.playerState = STATE_WALK;
 		break;
 	}
@@ -351,4 +398,47 @@ void UpdateAnchor()
 	GameObject& obj_anchor = Play::GetGameObjectByType(TYPE_ANCHORPOINT);
 	Play::UpdateGameObject(obj_anchor);
 	Play::DrawObject(obj_anchor);
+}
+
+void CreateEnemies()
+{
+	std::vector<int> vPlatforms = Play::CollectGameObjectIDsByType(TYPE_PLATFORM);
+	GameObject& obj_platform = Play::GetGameObject(vPlatforms.at(6));
+
+	std::vector<int> vEnemies (1);
+	for (int id : vEnemies)
+	{
+		id = Play::CreateGameObject(TYPE_ENEMY, { 0, 0 }, 25, "enemy");
+		GameObject& obj_enemy = Play::GetGameObject(id);
+
+		obj_enemy.velocity = { 2, 0 };
+		obj_enemy.pos.y = obj_platform.pos.y - Play::GetSpriteHeight("enemy")/2;
+		int init_distance = Play::RandomRoll(Play::GetSpriteWidth("platform")
+			- Play::GetSpriteWidth("enemy"));
+		obj_enemy.pos.x = obj_platform.pos.x + (Play::GetSpriteWidth("enemy") / 2) + init_distance;
+	}
+
+}
+
+void UpdateEnemyMovementOnPlatform()
+{
+	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
+	GameObject& obj_enemy = Play::GetGameObjectByType(TYPE_ENEMY);
+	std::vector<int> vPlatforms = Play::CollectGameObjectIDsByType(TYPE_PLATFORM);
+	GameObject& obj_platform = Play::GetGameObject(vPlatforms.at(6));
+	
+
+	if (obj_enemy.pos.x <= (obj_platform.pos.x + (Play::GetSpriteWidth("enemy") / 2)) ||
+		obj_enemy.pos.x >= (obj_platform.pos.x + Play::GetSpriteWidth("platform") - (Play::GetSpriteWidth("enemy") / 2)))
+	{
+		obj_enemy.velocity.x = -(obj_enemy.velocity.x);
+	}
+
+	if (Play::IsColliding(obj_enemy, obj_player))
+	{
+		gameState.playerHP -= 50;
+	}
+
+	Play::UpdateGameObject(obj_enemy);
+	Play::DrawObject(obj_enemy);
 }
