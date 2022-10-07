@@ -25,9 +25,17 @@ enum GameObjectType
 enum PlayerState
 {
 	STATE_WALK = 0,
+	STATE_IDLE,
 	STATE_JUMP,
 	STATE_SWING,
 	STATE_DEAD,
+};
+
+enum EnemyState
+{
+	ENEMYSTATE_WALK = 0,
+	ENEMYSTATE_WOUNDED,
+	ENEMYSTATE_DEAD,
 };
 
 struct GameState
@@ -35,6 +43,7 @@ struct GameState
 	int playerHP = 100;
 	Point2f startingPoint = { 120, 184 };
 	PlayerState playerState = STATE_WALK;
+	EnemyState enemyState = ENEMYSTATE_WALK;
 	bool direction = false; //true = left, false = right
 };
 GameState gameState;
@@ -49,6 +58,7 @@ void UpdatePlatforms();
 void TempCursorPos();
 bool PlayerAndPlatformCollision();
 void UpdatePlayer();
+void UpdateEnemies();
 void SwingMechanic();
 void CreateAnchor();
 void UpdateAnchor();
@@ -56,6 +66,8 @@ void DrawTarget();
 void UpdateAmmo();
 void UpdateEnemyMovementOnPlatform();
 void CreateEnemies();
+void DrawPlatforms();
+void DrawObjectYFlipped(GameObject&);
 
 
 
@@ -64,11 +76,9 @@ void CreateEnemies();
 void MainGameEntry(PLAY_IGNORE_COMMAND_LINE)
 {
 	Play::CreateManager(DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_SCALE);
-	Play::LoadBackground("Data\\Background\\city.png");
-	Play::CreateGameObject(TYPE_PLAYER, gameState.startingPoint, 25, "player");
-	Play::CentreSpriteOrigin("player");
-	Play::CentreSpriteOrigin("anchor");
-	Play::CentreSpriteOrigin("enemy");
+	Play::LoadBackground("Data\\Background\\lab_background.png");
+	Play::CreateGameObject(TYPE_PLAYER, gameState.startingPoint, 50, "player");
+	Play::CentreAllSpriteOrigins();
 	CreatePlatforms();
 	CreateAnchor();
 	CreateEnemies();
@@ -76,16 +86,14 @@ void MainGameEntry(PLAY_IGNORE_COMMAND_LINE)
 
 bool MainGameUpdate(float elapsedTime)
 {
-	//Play::ClearDrawingBuffer(Play::cYellow);
 	Play::DrawBackground();
+	DrawPlatforms();
 	UpdatePlatforms();
-	//TempCursorPos();
+	TempCursorPos();
 	UpdateAnchor();
 	UpdatePlayer();
 	UpdateAmmo();
-	UpdateEnemyMovementOnPlatform();
-	//Point2f camPos = Play::GetCameraPosition();
-	//Play::DrawFontText("64px", std::to_string(camPos.x) + ", " + std::to_string(camPos.y), {20, 20});
+	UpdateEnemies();
 	Play::PresentDrawingBuffer();
 	return Play::KeyDown(VK_ESCAPE);
 }
@@ -105,13 +113,16 @@ void HandlePlayerControls()
 {
 	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
 
-	if (obj_player.pos.x - obj_player.oldPos.x <= 0)
+	if (obj_player.velocity.x != 0)
 	{
-		gameState.direction = true;
-	}
-	else
-	{
-		gameState.direction = false;
+		if (obj_player.pos.x - obj_player.oldPos.x < 0)
+		{
+			gameState.direction = true;
+		}
+		else
+		{
+			gameState.direction = false;
+		}
 	}
 
 	bool onSolidGround = PlayerAndPlatformCollision();
@@ -139,17 +150,21 @@ void HandlePlayerControls()
 		obj_player.velocity.x = 6;
 	}
 
+	if (obj_player.velocity.x == 0 && obj_player.velocity.y == 0)
+	{
+		gameState.playerState = STATE_IDLE;
+	}
 }
 
 void CreatePlatforms()
 {
 	std::vector<std::vector<float>> platformPositions{
-		{70., 345.},
+		{70., 360.},
 		{335., 196.},
 		{950., 427.},
 		{1230., 427.},
-		{1740., 680.},
-		{1940., 680.},
+		{1730., 680.},
+		{1920., 680.},
 		{1260., 680.}
 	};
 	std::vector <int> vPlatforms(platformPositions.size());
@@ -157,7 +172,7 @@ void CreatePlatforms()
 	int n = 0;
 	for (int id : vPlatforms)
 	{
-		int id = Play::CreateGameObject(TYPE_PLATFORM, { 0, 0 }, 0, "platform");
+		int id = Play::CreateGameObject(TYPE_PLATFORM, { 0, 0 }, 0, "platform_left_edge");
 		GameObject& obj_platform = Play::GetGameObject(id);
 		obj_platform.pos = { platformPositions.at(n).at(0), platformPositions.at(n).at(1) };
 		n++;
@@ -186,19 +201,20 @@ bool PlayerAndPlatformCollision()
 {
 	std::vector <int> vPlatforms = Play::CollectGameObjectIDsByType(TYPE_PLATFORM);
 	bool onPlatform = false;
+	float walk_width = Play::GetSpriteWidth("walk");
 	for (int id : vPlatforms)
 	{
 		GameObject& obj_platform = Play::GetGameObject(id);
 		float platform_xmin = obj_platform.pos.x;
-		float platform_xmax = obj_platform.pos.x + Play::GetSpriteWidth("platform");
+		float platform_xmax = obj_platform.pos.x + 180;
 		float platform_ymin = obj_platform.pos.y;
-		float platform_ymax = obj_platform.pos.y + Play::GetSpriteHeight("platform");
+		float platform_ymax = obj_platform.pos.y + 50;
 
 		GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
-		float player_xmin = obj_player.pos.x - (Play::GetSpriteWidth("player") / 2);
-		float player_xmax = obj_player.pos.x + (Play::GetSpriteWidth("player") / 2);
-		float player_ymin = obj_player.pos.y - (Play::GetSpriteHeight("player") / 2);
-		float player_ymax = obj_player.pos.y + (Play::GetSpriteHeight("player") / 2);
+		float player_xmin = obj_player.pos.x - (Play::GetSpriteWidth("walk") / 2);
+		float player_xmax = obj_player.pos.x + (Play::GetSpriteWidth("walk") / 2);
+		float player_ymin = obj_player.pos.y - (Play::GetSpriteHeight("walk") / 2);
+		float player_ymax = obj_player.pos.y + (Play::GetSpriteHeight("walk") / 2);
 
 		
 		if (platform_xmin < player_xmax && platform_xmax > player_xmin &&
@@ -206,7 +222,7 @@ bool PlayerAndPlatformCollision()
 		{
 			obj_player.acceleration.y = 0;
 			obj_player.velocity.y = 0;
-			obj_player.pos.y = obj_platform.pos.y - (Play::GetSpriteHeight("player")/2) + 5;
+			obj_player.pos.y = obj_platform.pos.y - (Play::GetSpriteHeight("walk")/2) + 5;
 			onPlatform = true;
 			break;
 		}
@@ -261,7 +277,7 @@ void SwingMechanic()
 	if (Play::KeyPressed(VK_SPACE))
 	{
 		gameState.playerState = STATE_JUMP;
-		if (gameState.direction == true)
+		if (gameState.direction)
 		{
 			obj_player.velocity.x = -4;
 		}
@@ -321,16 +337,10 @@ void DrawTarget()
 void UpdateAmmo()
 {
 	std::vector<int> vAmmo = Play::CollectGameObjectIDsByType(TYPE_AMMO);
-	//GameObject& obj_enemy = Play::GetGameObjectByType(TYPE_ENEMY);
 	for (int id : vAmmo)
 	{
 		GameObject& obj_ammo = Play::GetGameObject(id);
-		/*
-		if (Play::IsColliding(obj_ammo, obj_enemy));
-		{
-			obj_enemy.type = TYPE_DEADENEMY;
-			Play::DestroyGameObject(id);
-		}*/
+		
 		Play::UpdateGameObject(obj_ammo);
 		Play::DrawObject(obj_ammo);
 
@@ -338,8 +348,6 @@ void UpdateAmmo()
 		{
 			Play::DestroyGameObject(id);
 		}
-
-		
 	}
 }
 
@@ -347,7 +355,7 @@ void UpdatePlayer()
 {
 	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
 	GameObject& obj_anchor = Play::GetGameObjectByType(TYPE_ANCHORPOINT);
-
+	obj_player.scale = 100.;
 	if (obj_player.pos.x >= 800)
 	{
 		Play::SetCameraPosition({ obj_player.pos.x - (DISPLAY_WIDTH / 2), 0 });
@@ -355,19 +363,30 @@ void UpdatePlayer()
 
 	if (Play::IsLeavingDisplayArea(obj_player, Play::VERTICAL) && obj_player.pos.y > 700)
 	{
+		gameState.playerHP = 0;
+	}
+	if (gameState.playerHP <= 0)
+	{
 		gameState.playerState = STATE_DEAD;
 	}
 
 	switch (gameState.playerState)
 	{
 	case STATE_WALK:
+		Play::SetSprite(obj_player, "shotgun_walk", 0.1f);
+		HandlePlayerControls();
+		DrawTarget();
+		break;
+
+	case STATE_IDLE:
+		Play::SetSprite(obj_player, "scientist_idle", 0.33f);
 		HandlePlayerControls();
 		DrawTarget();
 		break;
 
 	case STATE_JUMP:
 		HandlePlayerControls();
-
+		Play::SetSprite(obj_player, "jump", 0);
 		if (Play::IsColliding(obj_player, obj_anchor) && Play::KeyPressed(VK_SPACE))
 			gameState.playerState = STATE_SWING;
 		break;
@@ -379,13 +398,44 @@ void UpdatePlayer()
 	case STATE_DEAD:
 		obj_player.pos = gameState.startingPoint;
 		Play::SetCameraPosition({ 0, 0 });
-		gameState.playerState = STATE_WALK;
+		gameState.playerState = STATE_JUMP;
+		obj_player.velocity.x = 0;
+		gameState.playerHP = 100;
 		break;
 	}
 
+	if (gameState.direction)
+	{
+		DrawObjectYFlipped(obj_player);
+	}
+	else
+	{
+		Play::DrawObject(obj_player);
+	}
+
 	Play::UpdateGameObject(obj_player);
-	Play::DrawObject(obj_player);
 }
+
+void UpdateEnemies()
+{
+	GameObject& obj_enemy = Play::GetGameObjectByType(TYPE_ENEMY);
+	switch (gameState.enemyState)
+	{
+	case ENEMYSTATE_WALK:
+		UpdateEnemyMovementOnPlatform();
+		Play::SetSprite(obj_enemy, "enemy_idle", 0.333f);
+		break;
+
+	case ENEMYSTATE_WOUNDED:
+
+		break;
+
+	case ENEMYSTATE_DEAD:
+
+		break;
+	}
+}
+
 
 void CreateAnchor()
 {
@@ -427,18 +477,58 @@ void UpdateEnemyMovementOnPlatform()
 	std::vector<int> vPlatforms = Play::CollectGameObjectIDsByType(TYPE_PLATFORM);
 	GameObject& obj_platform = Play::GetGameObject(vPlatforms.at(6));
 	
-
-	if (obj_enemy.pos.x <= (obj_platform.pos.x + (Play::GetSpriteWidth("enemy") / 2)) ||
-		obj_enemy.pos.x >= (obj_platform.pos.x + Play::GetSpriteWidth("platform") - (Play::GetSpriteWidth("enemy") / 2)))
+	if (obj_enemy.pos.x <= (obj_platform.pos.x ) ||
+		obj_enemy.pos.x >= (obj_platform.pos.x + Play::GetSpriteWidth("spr_platform")))
 	{
 		obj_enemy.velocity.x = -(obj_enemy.velocity.x);
 	}
 
 	if (Play::IsColliding(obj_enemy, obj_player))
 	{
-		gameState.playerHP -= 50;
+		gameState.playerHP -= 25;
 	}
 
 	Play::UpdateGameObject(obj_enemy);
 	Play::DrawObject(obj_enemy);
+
+	std::vector<int> vAmmo = Play::CollectGameObjectIDsByType(TYPE_AMMO);
+	for (int id : vAmmo)
+	{
+		GameObject& obj_ammo = Play::GetGameObject(id);
+		if (Play::IsColliding(obj_ammo, obj_enemy))
+		{
+			Play::DestroyGameObject(id);
+			obj_enemy.type = TYPE_DEADENEMY;
+		}
+	}
+}
+
+void DrawPlatforms()
+{
+	Play::SetSpriteOrigin("platform_left", 0, 0);
+	Play::SetSpriteOrigin("platform_inner", 0, 0);
+	Play::SetSpriteOrigin("platform_right", 0, 0);
+	std::vector<int> vPlatform = Play::CollectGameObjectIDsByType(TYPE_PLATFORM);
+	int Sprite1Width = Play::GetSpriteWidth("platform_left_edge");
+	int Sprite2Width = Play::GetSpriteWidth("platform_inner_repeating");
+
+	for (int id : vPlatform)
+	{
+		GameObject& obj_platform = Play::GetGameObject(id);
+		Play::DrawSprite("platform_left_edge", obj_platform.pos, 0);
+		Play::DrawSprite("platform_inner_repeating",
+			{ obj_platform.pos.x + Sprite1Width, obj_platform.pos.y}, 0);
+		Play::DrawSprite("platform_right_edge", 
+			{ obj_platform.pos.x + Sprite1Width + Sprite2Width, obj_platform.pos.y }, 0);
+	}
+}
+
+void DrawObjectYFlipped( GameObject& obj )
+{
+	Matrix2D flipMat = MatrixIdentity();
+	flipMat.row[0].x = -1.0f;
+	flipMat.row[2].x = obj.pos.x;
+	flipMat.row[2].y = obj.pos.y;
+
+	Play::DrawSpriteTransformed(obj.spriteId, flipMat, obj.frame);
 }
