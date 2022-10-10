@@ -211,8 +211,9 @@ bool PlayerAndPlatformCollision()
 		float platform_ymax = obj_platform.pos.y + 50;
 
 		GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
-		float player_xmin = obj_player.pos.x - (Play::GetSpriteWidth("walk") / 2);
-		float player_xmax = obj_player.pos.x + (Play::GetSpriteWidth("walk") / 2);
+		//Need to account that the sprites 'feet' are a lot smaller than the sprite
+		float player_xmin = obj_player.pos.x - (Play::GetSpriteWidth("walk") / 5);
+		float player_xmax = obj_player.pos.x + (Play::GetSpriteWidth("walk") / 5);
 		float player_ymin = obj_player.pos.y - (Play::GetSpriteHeight("walk") / 2);
 		float player_ymax = obj_player.pos.y + (Play::GetSpriteHeight("walk") / 2);
 
@@ -318,6 +319,7 @@ void DrawTarget()
 		int id = Play::CreateGameObject(TYPE_AMMO, obj_player.pos, 5, "ammo");
 		GameObject& obj_ammo = Play::GetGameObject(id);
 
+
 		if (targetPoint.x >= obj_player.pos.x)
 		{
 			Play::SetGameObjectDirection(obj_ammo, 8, theta + PLAY_PI / 2);
@@ -326,8 +328,10 @@ void DrawTarget()
 		{
 			Play::SetGameObjectDirection(obj_ammo, 8, theta - PLAY_PI/2);
 		}
-		cursorReleased = false;		
+		cursorReleased = false;	
 	}
+
+
 	if (Play::GetMouseButton(Play::LEFT) == false)
 	{
 		cursorReleased = true;
@@ -467,7 +471,6 @@ void CreateEnemies()
 			- Play::GetSpriteWidth("enemy"));
 		obj_enemy.pos.x = obj_platform.pos.x + (Play::GetSpriteWidth("enemy") / 2) + init_distance;
 	}
-
 }
 
 void UpdateEnemyMovementOnPlatform()
@@ -487,8 +490,8 @@ void UpdateEnemyMovementOnPlatform()
 	{
 		gameState.playerHP -= 25;
 	}
-
-	Play::UpdateGameObject(obj_enemy);
+	
+	Play::UpdateGameObject(obj_enemy);	
 	Play::DrawObject(obj_enemy);
 
 	std::vector<int> vAmmo = Play::CollectGameObjectIDsByType(TYPE_AMMO);
