@@ -2,13 +2,15 @@
 #include "Play.h"
 #include "PlayerFunctions.h"
 #include "MainGame.h"
+#include "EnemyFunctions.h"
 
-
+PlayerState playerState, resetPlayerState;
 
 void UpdatePlayer()
 {
 	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
 	GameObject& obj_anchor = Play::GetGameObjectByType(TYPE_ANCHORPOINT);
+
 	if (obj_player.pos.x >= (DISPLAY_WIDTH/2))
 	{
 		Play::SetCameraPosition({ obj_player.pos.x - (DISPLAY_WIDTH / 2), 0 });
@@ -24,7 +26,7 @@ void UpdatePlayer()
 	{
 		playerState.playerHP = 0;
 	}
-	if (playerState.playerHP <= 0)
+	if (playerState.playerHP == 0)
 	{
 		playerState.state = STATE_DEAD;
 	}
@@ -56,6 +58,8 @@ void UpdatePlayer()
 
 	case STATE_DEAD:
 		obj_player.velocity.x = 0;
+		Play::ColourSprite("walk", Play::cRed);
+		Play::ColourSprite("scientist_idle", Play::cRed);	
 		Point2f camPos = Play::GetCameraPosition();
 		Play::DrawFontText("132", "PRESS SPACEBAR TO RESTART", 
 			{(camPos.x + DISPLAY_WIDTH/2), DISPLAY_HEIGHT/2}, Play::CENTRE);
@@ -92,7 +96,7 @@ void UpdatePlayer()
 void HandlePlayerControls()
 {
 	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
-
+	
 	if (obj_player.velocity.x != 0)
 	{
 		if (obj_player.pos.x - obj_player.oldPos.x < 0)
@@ -123,16 +127,30 @@ void HandlePlayerControls()
 
 	if (Play::KeyDown(VK_LEFT))
 	{
-		obj_player.velocity.x = -6;
+		obj_player.velocity.x = -7;
 	}
 	if (Play::KeyDown(VK_RIGHT))
 	{
-		obj_player.velocity.x = 6;
+		obj_player.velocity.x = 7;
 	}
 
 	if (obj_player.velocity.x == 0 && obj_player.velocity.y == 0)
 	{
 		playerState.state = STATE_IDLE;
+	}
+
+
+	if (gamePlayState.damage_timer >= 2. && gamePlayState.stopwatch - gamePlayState.damage_timer <= 2.)
+	{
+		Play::ColourSprite("walk", Play::cRed);
+		Play::ColourSprite("scientist_idle", Play::cRed);
+		playerState.hurt = true;
+	}
+	else
+	{
+		Play::ColourSprite("walk", Play::cWhite);
+		Play::ColourSprite("scientist_idle", Play::cWhite);
+		playerState.hurt = false;
 	}
 }
 

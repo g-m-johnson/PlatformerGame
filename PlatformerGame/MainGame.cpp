@@ -7,7 +7,7 @@
 
 
 GamePlayState gamePlayState, resetGame;
-PlayerState playerState, resetPlayerState;
+
 
 // MAIN
 void MainGameEntry(PLAY_IGNORE_COMMAND_LINE)
@@ -34,6 +34,7 @@ bool MainGameUpdate(float elapsedTime)
 	UpdateAmmo();
 	UpdateCollectables();
 	UpdateEnemies();	
+	HandleUI();
 	Play::PresentDrawingBuffer();
 	return Play::KeyDown(VK_ESCAPE);
 }
@@ -265,14 +266,32 @@ void UpdateCollectables()
 		if (Play::IsColliding(obj_player, obj_health) && playerState.playerHP <= 100)
 		{
 			Play::DestroyGameObject(id);
-			if (playerState.playerHP <= 80)
+			if (playerState.playerHP <= 2)
 			{
-				playerState.playerHP += 20;
+				playerState.playerHP += 1;
 			}
 			else
 			{
-				playerState.playerHP = 100;
+				playerState.playerHP = 3;
 			}
 		}
+	}
+}
+
+void HandleUI()
+{
+	Point2D camPos = Play::GetCameraPosition();
+	std::vector<Point2D> vHearts
+	{
+		{camPos.x + 120, camPos.y + 50},
+		{camPos.x + 170, camPos.y + 50},
+		{camPos.x + 220, camPos.y + 50}
+	};
+
+	Play::DrawFontText("64", "LIVES: ", { camPos.x + 20, camPos.y + 50 });
+
+	for (int i = 0; i < playerState.playerHP; i++)
+	{
+		Play::DrawSprite("heart", vHearts.at(i), 0);
 	}
 }

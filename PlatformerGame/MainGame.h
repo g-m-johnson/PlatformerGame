@@ -12,7 +12,6 @@ enum GameObjectType
 	TYPE_ANCHORPOINT,
 	TYPE_AMMO,
 	TYPE_ENEMY,
-	TYPE_DEADENEMY,
 	TYPE_FLASK,
 	TYPE_HEALTH,
 };
@@ -31,13 +30,15 @@ struct GamePlayState
 {
 	float stopwatch = 0;
 	float init_time = 0;
+	float damage_timer = 0;
 };
 extern GamePlayState gamePlayState, resetGame;
 
 struct PlayerState
 {
-	int playerHP = 100;
+	int playerHP = 3;
 	int playerXP = 0;
+	bool hurt = false;
 	Point2f startingPoint = { 120, 184 };
 	CharacterState state = STATE_WALK;
 	bool direction = false; //true = left, false = right
@@ -52,7 +53,6 @@ struct EnemyState
 	bool direction = false;
 };
 extern EnemyState enemyState, resetEnemyState;
-
 
 
 // Draws the coordinates of the cursor on screen
@@ -71,3 +71,4 @@ void DrawPlatforms();
 void DrawObjectYFlipped(GameObject&);
 void CreateCollectables();
 void UpdateCollectables();
+void HandleUI();

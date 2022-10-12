@@ -34,6 +34,8 @@ void CreateEnemies()
 void UpdateEnemies()
 {
 	GameObject& obj_enemy = Play::GetGameObjectByType(TYPE_ENEMY);
+	Play::SetSprite(obj_enemy, "enemy_idle", 0.333f);
+	Play::ColourSprite("enemy_idle", Play::cWhite);
 
 	if (obj_enemy.velocity.x != 0)
 	{
@@ -51,10 +53,6 @@ void UpdateEnemies()
 		obj_enemy.velocity.x = 2;
 	}
 
-
-	
-	Play::SetSprite(obj_enemy, "enemy_idle", 0.333f);
-	Play::ColourSprite("enemy_idle", Play::cWhite);
 	switch (enemyState.state)
 	{
 	case STATE_WALK:
@@ -110,9 +108,11 @@ void UpdateEnemyMovement()
 		obj_enemy.velocity.x = -(obj_enemy.velocity.x);
 	}
 
-	if (Play::IsColliding(obj_enemy, obj_player) && enemyState.state != STATE_DEAD)
+	if (Play::IsColliding(obj_enemy, obj_player) && enemyState.state != STATE_DEAD 
+		&& playerState.playerHP > 0 && !playerState.hurt)
 	{
-		playerState.playerHP -= 25;
+		playerState.playerHP -= 1;
+		gamePlayState.damage_timer = gamePlayState.stopwatch;
 	}
 
 	std::vector<int> vAmmo = Play::CollectGameObjectIDsByType(TYPE_AMMO);
