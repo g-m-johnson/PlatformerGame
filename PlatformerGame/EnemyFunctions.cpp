@@ -58,11 +58,11 @@ void UpdateEnemies()
 	switch (enemyState.state)
 	{
 	case STATE_WALK:
-		UpdateEnemyMovementOnPlatform();
+		UpdateEnemyMovement();
 		break;
 
 	case STATE_WOUNDED:
-		UpdateEnemyMovementOnPlatform();
+		UpdateEnemyMovement();
 
 		if (gamePlayState.stopwatch - gamePlayState.init_time <= 1.)
 		{
@@ -97,7 +97,7 @@ void UpdateEnemies()
 
 
 
-void UpdateEnemyMovementOnPlatform()
+void UpdateEnemyMovement()
 {
 	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
 	GameObject& obj_enemy = Play::GetGameObjectByType(TYPE_ENEMY);

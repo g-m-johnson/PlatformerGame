@@ -17,6 +17,7 @@ void MainGameEntry(PLAY_IGNORE_COMMAND_LINE)
 	Play::CreateGameObject(TYPE_PLAYER, playerState.startingPoint, 50, "player");
 	Play::CentreAllSpriteOrigins();
 	CreatePlatforms();
+	CreateCollectables();
 	CreateAnchor();
 	CreateEnemies();
 }
@@ -31,7 +32,8 @@ bool MainGameUpdate(float elapsedTime)
 	UpdateAnchor();
 	UpdatePlayer();
 	UpdateAmmo();
-	UpdateEnemies();
+	UpdateCollectables();
+	UpdateEnemies();	
 	Play::PresentDrawingBuffer();
 	return Play::KeyDown(VK_ESCAPE);
 }
@@ -202,3 +204,75 @@ void DrawObjectYFlipped( GameObject& obj )
 	Play::DrawSpriteTransformed(obj.spriteId, flipMat, obj.frame);
 }
 
+
+void CreateCollectables()
+{
+	Play::SetSpriteOrigin("flask", 36, 73);
+	std::vector<std::vector<float>> flaskPositions
+	{
+		{1215., 600.}
+	};
+	std::vector<int> vFlasks(flaskPositions.size());
+	int n = 0;
+	for (int id : vFlasks)
+	{
+		id = Play::CreateGameObject(TYPE_FLASK, { 0, 0 }, 30, "flask");
+		GameObject& obj_flask = Play::GetGameObject(id);
+		obj_flask.pos = { flaskPositions.at(n).at(0), flaskPositions.at(n).at(1)};
+		n++;
+	}
+
+	std::vector<std::vector<float>> healthPositions
+	{
+		
+	};
+	std::vector<int> vHealth(healthPositions.size());
+	int m = 0;
+	for (int id : vHealth)
+	{
+		id = Play::CreateGameObject(TYPE_HEALTH, { 0, 0 }, 30, "medkit");
+		GameObject& obj_health = Play::GetGameObject(id);
+		obj_health.pos = { healthPositions.at(m).at(0), flaskPositions.at(m).at(1) };
+		m++;
+	}
+}
+
+void UpdateCollectables()
+{
+	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
+
+	std::vector <int> vFlasks = Play::CollectGameObjectIDsByType(TYPE_FLASK);
+	for (int id : vFlasks)
+	{
+		GameObject& obj_flask = Play::GetGameObject(id);
+		Play::UpdateGameObject(obj_flask);
+		Play::DrawObject(obj_flask);
+
+		if (Play::IsColliding(obj_player, obj_flask))
+		{
+			Play::DestroyGameObject(id);
+			playerState.playerXP++;
+		}
+	}
+
+	std::vector <int> vHealth = Play::CollectGameObjectIDsByType(TYPE_HEALTH);
+	for (int id : vHealth)
+	{
+		GameObject& obj_health = Play::GetGameObject(id);
+		Play::UpdateGameObject(obj_health);
+		Play::DrawObject(obj_health);
+
+		if (Play::IsColliding(obj_player, obj_health) && playerState.playerHP <= 100)
+		{
+			Play::DestroyGameObject(id);
+			if (playerState.playerHP <= 80)
+			{
+				playerState.playerHP += 20;
+			}
+			else
+			{
+				playerState.playerHP = 100;
+			}
+		}
+	}
+}

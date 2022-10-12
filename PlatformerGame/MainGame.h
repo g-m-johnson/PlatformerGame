@@ -13,6 +13,8 @@ enum GameObjectType
 	TYPE_AMMO,
 	TYPE_ENEMY,
 	TYPE_DEADENEMY,
+	TYPE_FLASK,
+	TYPE_HEALTH,
 };
 
 enum CharacterState
@@ -35,6 +37,7 @@ extern GamePlayState gamePlayState, resetGame;
 struct PlayerState
 {
 	int playerHP = 100;
+	int playerXP = 0;
 	Point2f startingPoint = { 120, 184 };
 	CharacterState state = STATE_WALK;
 	bool direction = false; //true = left, false = right
@@ -66,4 +69,5 @@ void UpdateAmmo();
 void DrawPlatforms();
 // Draws a sprite as a reflection in the Y axis
 void DrawObjectYFlipped(GameObject&);
-
+void CreateCollectables();
+void UpdateCollectables();
