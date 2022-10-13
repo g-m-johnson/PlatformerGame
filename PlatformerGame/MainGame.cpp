@@ -16,6 +16,7 @@ void MainGameEntry(PLAY_IGNORE_COMMAND_LINE)
 	Play::LoadBackground("Data\\Background\\lab_background.png");
 	Play::CreateGameObject(TYPE_PLAYER, playerState.startingPoint, 50, "player");
 	Play::CentreAllSpriteOrigins();
+	Play::PlayAudio("Machine-Madness");
 	CreatePlatforms();
 	CreateCollectables();
 	CreateAnchor();
@@ -27,13 +28,12 @@ bool MainGameUpdate(float elapsedTime)
 	Play::DrawBackground();
 	gamePlayState.stopwatch += elapsedTime;
 	DrawPlatforms();
-	UpdatePlatforms();
-	//TempCursorPos();
-	UpdateAnchor();
+	TempCursorPos();
 	UpdatePlayer();
 	UpdateAmmo();
 	UpdateCollectables();
 	UpdateEnemies();	
+	UpdateRopeSwing();
 	HandleUI();
 	Play::PresentDrawingBuffer();
 	return Play::KeyDown(VK_ESCAPE);
@@ -56,7 +56,10 @@ void CreatePlatforms()
 		{1230., 427.},
 		{1730., 680.},
 		{1920., 680.},
-		{1260., 680.}
+		{1260., 680.},
+		{2100., 520.},
+		{2280., 360.},
+		{1575., 90.}
 	};
 	std::vector <int> vPlatforms(platformPositions.size());
 
@@ -70,22 +73,12 @@ void CreatePlatforms()
 	}
 }
 
-void UpdatePlatforms()
-{
-	std::vector <int> vPlatforms = Play::CollectGameObjectIDsByType(TYPE_PLATFORM);
-	for (int id : vPlatforms)
-	{
-		GameObject& obj_platform = Play::GetGameObject(id);
-		Play::UpdateGameObject(obj_platform);
-		Play::DrawObject(obj_platform);
-	}
-}
-
 void TempCursorPos()
 {
 	Point2D mousePos = Play::GetMousePos();
 	Point2D camPos = Play::GetCameraPosition();
-	Play::DrawFontText("64px", std::to_string(camPos.x + mousePos.x) + ", " + std::to_string(mousePos.y), mousePos);
+	Point2D textPos = { mousePos.x + camPos.x, mousePos.y + camPos.y };
+	Play::DrawFontText("64px", std::to_string(camPos.x + mousePos.x) + ", " + std::to_string(mousePos.y), textPos);
 }
 
 bool cursorReleased = true;
@@ -161,17 +154,19 @@ void UpdateAmmo()
 
 void CreateAnchor()
 {
-	Point2D AnchorPos = { 800, 20 };
-	Play::CreateGameObject(TYPE_ANCHORPOINT, AnchorPos, 250, "anchor");
+	std::vector<Point2D> anchorPositions
+	{
+		{ 800, -10 },
+		{2080, -10}
+	};
+	std::vector<int> vAnchors(anchorPositions.size());
+	int n = 0;
+	for (int id : vAnchors)
+	{
+		id = Play::CreateGameObject(TYPE_ANCHORPOINT, anchorPositions.at(n), 250, "anchor");
+		n++;
+	}
 }
-
-void UpdateAnchor()
-{
-	GameObject& obj_anchor = Play::GetGameObjectByType(TYPE_ANCHORPOINT);
-	Play::UpdateGameObject(obj_anchor);
-	Play::DrawObject(obj_anchor);
-}
-
 
 
 
@@ -293,5 +288,18 @@ void HandleUI()
 	for (int i = 0; i < playerState.playerHP; i++)
 	{
 		Play::DrawSprite("heart", vHearts.at(i), 0);
+	}
+}
+
+void UpdateRopeSwing()
+{
+	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
+	std::vector<int> vAnchors = Play::CollectGameObjectIDsByType(TYPE_ANCHORPOINT);
+	for (int id : vAnchors)
+	{
+		if (playerState.state != STATE_SWING)
+		{
+			DrawRopeSwing(id, 1, 0);
+		}
 	}
 }

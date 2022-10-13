@@ -9,7 +9,7 @@ PlayerState playerState, resetPlayerState;
 void UpdatePlayer()
 {
 	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
-	GameObject& obj_anchor = Play::GetGameObjectByType(TYPE_ANCHORPOINT);
+	std::vector<int> vAnchors = Play::CollectGameObjectIDsByType(TYPE_ANCHORPOINT);
 
 	if (obj_player.pos.x >= (DISPLAY_WIDTH/2))
 	{
@@ -48,8 +48,18 @@ void UpdatePlayer()
 	case STATE_JUMP:
 		HandlePlayerControls();
 		Play::SetSprite(obj_player, "jump", 0);
-		if (Play::IsColliding(obj_player, obj_anchor) && Play::KeyPressed(VK_SPACE))
-			playerState.state = STATE_SWING;
+
+
+		for (int id : vAnchors)
+		{
+			GameObject& obj_anchor = Play::GetGameObject(id);
+
+			if (Play::IsColliding(obj_player, obj_anchor) && Play::KeyPressed(VK_SPACE))
+			{
+				playerState.state = STATE_SWING;
+				gamePlayState.noteObjectId = id;
+			}
+		}
 		break;
 
 	case STATE_SWING:
@@ -199,17 +209,17 @@ bool PlayerAndPlatformCollision()
 void SwingMechanic()
 {
 	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
-	GameObject& obj_anchor = Play::GetGameObjectByType(TYPE_ANCHORPOINT);
+	GameObject& obj_anchor = Play::GetGameObject(gamePlayState.noteObjectId);
 
-	Play::DrawLine(obj_player.pos, obj_anchor.pos, Play::cWhite);
 	float ropeLength = obj_anchor.radius + obj_player.radius + 10;
 	float dx = obj_anchor.pos.x - obj_player.pos.x;
 	float dy = obj_player.pos.y - obj_anchor.pos.y;
 	float theta = atan(dy / dx);
-
+	float phi = atan(dx / dy);
 
 	if (!Play::IsColliding(obj_player, obj_anchor))
 	{
+		DrawRopeSwing(gamePlayState.noteObjectId, 2, phi);
 		obj_player.velocity = { 0, 0 };
 		obj_player.acceleration = { 0, 0 };
 		if (dy < 100)
@@ -236,7 +246,10 @@ void SwingMechanic()
 			obj_player.pos.x = obj_anchor.pos.x + ropeLength * cos(theta);
 			obj_player.pos.y = obj_anchor.pos.y - ropeLength * sin(theta);
 		}
-
+	}
+	else
+	{
+		DrawRopeSwing(gamePlayState.noteObjectId, 1, phi);
 	}
 
 
@@ -251,5 +264,33 @@ void SwingMechanic()
 		{
 			obj_player.velocity.x = 4;
 		}
+	}
+}
+
+void DrawRopeSwing(int id, int ropeState, float angle)
+{
+	//GameObject& obj_anchor = Play::GetGameObjectByType(TYPE_ANCHORPOINT);
+	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
+
+	Play::SetSpriteOrigin("long_pieces_with_wires", 10, 0);
+	Play::SetSpriteOrigin("long_piece", 10, 0);
+
+	GameObject& obj_anchor = Play::GetGameObject(id);
+
+	switch (ropeState)
+	{
+	// rope not being interacted with
+	case 1:
+		Play::DrawSprite("long_piece", { obj_anchor.pos.x, 0 }, 0);
+		Play::DrawSprite("long_pieces_with_wires", { obj_anchor.pos.x, (Play::GetSpriteHeight("long_piece")) }, 0);
+		break;
+		// player on swing
+	case 2:
+		Play::DrawSpriteRotated("long_piece", obj_anchor.pos, 0, angle);
+		Point2D secondSpritePos;
+		secondSpritePos.x = obj_anchor.pos.x - Play::GetSpriteHeight("long_piece") * sin(angle);
+		secondSpritePos.y = obj_anchor.pos.y + Play::GetSpriteHeight("long_piece") * cos(angle);
+		Play::DrawSpriteRotated("long_pieces_with_wires", secondSpritePos, 0, angle);
+		break;
 	}
 }

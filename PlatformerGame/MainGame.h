@@ -31,6 +31,7 @@ struct GamePlayState
 	float stopwatch = 0;
 	float init_time = 0;
 	float damage_timer = 0;
+	int noteObjectId = 0;
 };
 extern GamePlayState gamePlayState, resetGame;
 
@@ -59,9 +60,8 @@ extern EnemyState enemyState, resetEnemyState;
 void TempCursorPos();
 // Creates platforms given a list of positions
 void CreatePlatforms();
-void UpdatePlatforms();
 void CreateAnchor();
-void UpdateAnchor();
+void UpdateRopeSwing();
 // Draws a target a set distance away from the origin of the sprite
 void DrawTarget();
 void UpdateAmmo();
