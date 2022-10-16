@@ -20,7 +20,7 @@ void CreateEnemies()
 		GameObject& obj_enemy = Play::GetGameObject(id);
 
 		obj_enemy.velocity = { 2, 0 };
-		obj_enemy.pos.y = obj_platform.pos.y - Play::GetSpriteHeight("enemy") / 1.5;
+		obj_enemy.pos.y = obj_platform.pos.y - Play::GetSpriteHeight("enemy") / 1.5f;
 		int init_distance = Play::RandomRoll(Play::GetSpriteWidth("platform")
 			- Play::GetSpriteWidth("enemy"));
 		obj_enemy.pos.x = obj_platform.pos.x + (Play::GetSpriteWidth("enemy") / 2) + init_distance;

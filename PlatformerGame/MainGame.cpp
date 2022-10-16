@@ -16,7 +16,7 @@ void MainGameEntry(PLAY_IGNORE_COMMAND_LINE)
 	Play::LoadBackground("Data\\Background\\lab_background.png");
 	Play::CreateGameObject(TYPE_PLAYER, playerState.startingPoint, 50, "player");
 	Play::CentreAllSpriteOrigins();
-	Play::PlayAudio("Machine-Madness");
+	Play::StartAudioLoop("Machine-Madness");
 	CreatePlatforms();
 	CreateCollectables();
 	CreateAnchor();
@@ -35,6 +35,7 @@ bool MainGameUpdate(float elapsedTime)
 	UpdateEnemies();	
 	UpdateRopeSwing();
 	HandleUI();
+	//ControlScreen();
 	Play::PresentDrawingBuffer();
 	return Play::KeyDown(VK_ESCAPE);
 }
@@ -49,17 +50,22 @@ int MainGameExit(void)
 // FUNCTIONS
 void CreatePlatforms()
 {
-	std::vector<std::vector<float>> platformPositions{
-		{70., 360.},
-		{335., 196.},
-		{950., 427.},
-		{1230., 427.},
-		{1730., 680.},
-		{1920., 680.},
-		{1260., 680.},
-		{2100., 520.},
-		{2280., 360.},
-		{1575., 90.}
+	std::vector<Point2D> platformPositions
+	{
+		{70, 360},
+		{335, 196},
+		{950, 427},
+		{1230, 427},
+		{1730, 680},
+		{1920, 680},
+		{1260, 680},
+		{2100, 520},
+		{2280, 360},
+		{1575, 90},
+		{2465, 360},
+		{3110, 400},
+		{3110, 665},
+		{3750, 293}
 	};
 	std::vector <int> vPlatforms(platformPositions.size());
 
@@ -68,11 +74,13 @@ void CreatePlatforms()
 	{
 		int id = Play::CreateGameObject(TYPE_PLATFORM, { 0, 0 }, 0, "platform_left_edge");
 		GameObject& obj_platform = Play::GetGameObject(id);
-		obj_platform.pos = { platformPositions.at(n).at(0), platformPositions.at(n).at(1) };
+		obj_platform.pos = platformPositions.at(n);
 		n++;
 	}
 }
 
+// Draws the coordinates of the mouse right next to the cursor
+// For ease of placing platforms, etc.
 void TempCursorPos()
 {
 	Point2D mousePos = Play::GetMousePos();
@@ -99,6 +107,7 @@ void DrawTarget()
 			obj_player.pos.y - (100 * sin(theta)) };
 	}
 
+	// Drawing target to screen
 	Play::DrawCircle(targetPoint, 10, Play::cWhite);
 	Play::DrawLine({targetPoint.x + 13, targetPoint.y}, 
 		{targetPoint.x - 13, targetPoint.y}, Play::cWhite);
@@ -123,7 +132,8 @@ void DrawTarget()
 		cursorReleased = false;	
 	}
 
-
+	// Ensuring that multiple bullets aren't released in one cursor press;
+	// can only shoot if cursor has been released since last time.
 	if (Play::GetMouseButton(Play::LEFT) == false)
 	{
 		cursorReleased = true;
@@ -157,7 +167,9 @@ void CreateAnchor()
 	std::vector<Point2D> anchorPositions
 	{
 		{ 800, -10 },
-		{2080, -10}
+		{2080, -10},
+		{2914, -10},
+		{3450, -10}
 	};
 	std::vector<int> vAnchors(anchorPositions.size());
 	int n = 0;
@@ -169,7 +181,7 @@ void CreateAnchor()
 }
 
 
-
+//Platform sprites come in separate sections. This function is just to draw them all put together.
 void DrawPlatforms()
 {
 	Play::SetSpriteOrigin("platform_left", 0, 0);
@@ -190,6 +202,8 @@ void DrawPlatforms()
 	}
 }
 
+
+//Draws object flipped in the Y axis
 void DrawObjectYFlipped( GameObject& obj )
 {
 	Matrix2D flipMat = MatrixIdentity();
@@ -204,9 +218,10 @@ void DrawObjectYFlipped( GameObject& obj )
 void CreateCollectables()
 {
 	Play::SetSpriteOrigin("flask", 36, 73);
-	std::vector<std::vector<float>> flaskPositions
+	std::vector<Point2D> flaskPositions
 	{
-		{1215., 600.}
+		{1215, 600},
+		{3200, 600}
 	};
 	std::vector<int> vFlasks(flaskPositions.size());
 	int n = 0;
@@ -214,13 +229,13 @@ void CreateCollectables()
 	{
 		id = Play::CreateGameObject(TYPE_FLASK, { 0, 0 }, 30, "flask");
 		GameObject& obj_flask = Play::GetGameObject(id);
-		obj_flask.pos = { flaskPositions.at(n).at(0), flaskPositions.at(n).at(1)};
+		obj_flask.pos = flaskPositions.at(n);
 		n++;
 	}
 
-	std::vector<std::vector<float>> healthPositions
+	std::vector<Point2D> healthPositions
 	{
-		
+		{1600, 47}
 	};
 	std::vector<int> vHealth(healthPositions.size());
 	int m = 0;
@@ -228,7 +243,7 @@ void CreateCollectables()
 	{
 		id = Play::CreateGameObject(TYPE_HEALTH, { 0, 0 }, 30, "medkit");
 		GameObject& obj_health = Play::GetGameObject(id);
-		obj_health.pos = { healthPositions.at(m).at(0), flaskPositions.at(m).at(1) };
+		obj_health.pos = healthPositions.at(m);
 		m++;
 	}
 }
@@ -251,6 +266,7 @@ void UpdateCollectables()
 		}
 	}
 
+	//Health adds to player HP
 	std::vector <int> vHealth = Play::CollectGameObjectIDsByType(TYPE_HEALTH);
 	for (int id : vHealth)
 	{
@@ -301,5 +317,25 @@ void UpdateRopeSwing()
 		{
 			DrawRopeSwing(id, 1, 0);
 		}
+	}
+}
+
+void ControlScreen()
+{
+	if (Play::KeyPressed(VK_TAB) && !gamePlayState.showMenu)
+	{
+		gamePlayState.showMenu = true;
+	}
+	if (Play::KeyPressed(VK_TAB) && gamePlayState.showMenu)
+	{
+		gamePlayState.showMenu = false;
+	}
+
+	if (gamePlayState.showMenu)
+	{
+		Play::DrawRect({ 100, 100 }, { 1180, 620 }, Play::cWhite, true);
+		Play::DrawFontText("132", "CONTROLS:\n", { 640, 200 }, Play::CENTRE);
+		Play::DrawFontText("132", "R/L ARROW KEYS TO WALK\n", { 640, 300 }, Play::CENTRE);
+		Play::DrawFontText("132", "SPACEBAR WHEN NEAR ROPE TO SWING\n", { 640, 400 }, Play::CENTRE);
 	}
 }

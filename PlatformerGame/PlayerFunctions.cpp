@@ -63,6 +63,13 @@ void UpdatePlayer()
 		break;
 
 	case STATE_SWING:
+		for (int id : vAnchors)
+		{
+			if (id != gamePlayState.noteObjectId)
+			{
+				DrawRopeSwing(id, 1, 0);
+			}
+		}
 		SwingMechanic();
 		break;
 
@@ -122,7 +129,7 @@ void HandlePlayerControls()
 	bool onSolidGround = PlayerAndPlatformCollision();
 	if (onSolidGround == false)
 	{
-		obj_player.acceleration.y = .8;
+		obj_player.acceleration.y = 0.8f;
 		playerState.state = STATE_JUMP;
 	}
 	if (onSolidGround == true)
@@ -172,7 +179,7 @@ bool PlayerAndPlatformCollision()
 {
 	std::vector <int> vPlatforms = Play::CollectGameObjectIDsByType(TYPE_PLATFORM);
 	bool onPlatform = false;
-	float walk_width = Play::GetSpriteWidth("walk");
+	int walk_width = Play::GetSpriteWidth("walk");
 	for (int id : vPlatforms)
 	{
 		GameObject& obj_platform = Play::GetGameObject(id);
@@ -182,7 +189,7 @@ bool PlayerAndPlatformCollision()
 		float platform_ymax = obj_platform.pos.y + 50;
 
 		GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
-		//Need to account that the sprites 'feet' are a lot smaller than the sprite
+		//Need to account that the sprites 'feet' are a lot smaller than the sprite width
 		float player_xmin = obj_player.pos.x - (Play::GetSpriteWidth("walk") / 5);
 		float player_xmax = obj_player.pos.x + (Play::GetSpriteWidth("walk") / 5);
 		float player_ymin = obj_player.pos.y - (Play::GetSpriteHeight("walk") / 2);
@@ -210,8 +217,10 @@ void SwingMechanic()
 {
 	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
 	GameObject& obj_anchor = Play::GetGameObject(gamePlayState.noteObjectId);
+	//get index of this point
+	//loop through all other rope swings and draw them stationary
 
-	float ropeLength = obj_anchor.radius + obj_player.radius + 10;
+	int ropeLength = obj_anchor.radius + obj_player.radius + 10;
 	float dx = obj_anchor.pos.x - obj_player.pos.x;
 	float dy = obj_player.pos.y - obj_anchor.pos.y;
 	float theta = atan(dy / dx);
@@ -229,11 +238,11 @@ void SwingMechanic()
 
 		if (playerState.direction == false)
 		{
-			theta += 0.04;
+			theta += 0.04f;
 		}
 		else
 		{
-			theta -= 0.04;
+			theta -= 0.04f;
 		}
 
 		if (obj_player.pos.x <= obj_anchor.pos.x)
@@ -258,18 +267,17 @@ void SwingMechanic()
 		playerState.state = STATE_JUMP;
 		if (playerState.direction)
 		{
-			obj_player.velocity.x = -4;
+			obj_player.velocity.x = -6;
 		}
 		else
 		{
-			obj_player.velocity.x = 4;
+			obj_player.velocity.x = 6;
 		}
 	}
 }
 
 void DrawRopeSwing(int id, int ropeState, float angle)
 {
-	//GameObject& obj_anchor = Play::GetGameObjectByType(TYPE_ANCHORPOINT);
 	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
 
 	Play::SetSpriteOrigin("long_pieces_with_wires", 10, 0);
@@ -284,7 +292,7 @@ void DrawRopeSwing(int id, int ropeState, float angle)
 		Play::DrawSprite("long_piece", { obj_anchor.pos.x, 0 }, 0);
 		Play::DrawSprite("long_pieces_with_wires", { obj_anchor.pos.x, (Play::GetSpriteHeight("long_piece")) }, 0);
 		break;
-		// player on swing
+	// player on swing
 	case 2:
 		Play::DrawSpriteRotated("long_piece", obj_anchor.pos, 0, angle);
 		Point2D secondSpritePos;

@@ -32,6 +32,7 @@ struct GamePlayState
 	float init_time = 0;
 	float damage_timer = 0;
 	int noteObjectId = 0;
+	bool showMenu = false;
 };
 extern GamePlayState gamePlayState, resetGame;
 
@@ -56,6 +57,7 @@ struct EnemyState
 extern EnemyState enemyState, resetEnemyState;
 
 
+void ControlScreen();
 // Draws the coordinates of the cursor on screen
 void TempCursorPos();
 // Creates platforms given a list of positions
