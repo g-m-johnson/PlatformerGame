@@ -35,7 +35,7 @@ void UpdateEnemies()
 {
 	GameObject& obj_enemy = Play::GetGameObjectByType(TYPE_ENEMY);
 	Play::SetSprite(obj_enemy, "enemy_idle", 0.333f);
-	Play::ColourSprite("enemy_idle", Play::cWhite);
+	
 
 	if (obj_enemy.velocity.x != 0)
 	{
@@ -62,10 +62,16 @@ void UpdateEnemies()
 	case STATE_WOUNDED:
 		UpdateEnemyMovement();
 
+		/*
 		if (gamePlayState.stopwatch - gamePlayState.init_time <= 1.)
 		{
 			Play::ColourSprite("enemy_idle", Play::cRed);
 		}
+		else
+		{
+			Play::ColourSprite("enemy_idle", Play::cWhite);
+		}
+		*/
 		break;
 
 	case STATE_DEAD:

@@ -6,6 +6,7 @@
 
 PlayerState playerState, resetPlayerState;
 
+bool playerVisible = true;
 void UpdatePlayer()
 {
 	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
@@ -31,16 +32,18 @@ void UpdatePlayer()
 		playerState.state = STATE_DEAD;
 	}
 
+	Point2f camPos = Play::GetCameraPosition();
+
 	switch (playerState.state)
 	{
 	case STATE_WALK:
-		Play::SetSprite(obj_player, "shotgun_walk", 0.33f);
+		Play::SetSprite(obj_player, "spr_walk", 0.2f);
 		HandlePlayerControls();
 		DrawTarget();
 		break;
 
 	case STATE_IDLE:
-		Play::SetSprite(obj_player, "scientist_idle", 0.33f);
+		Play::SetSprite(obj_player, "scientist_idle", 0.2f);
 		HandlePlayerControls();
 		DrawTarget();
 		break;
@@ -75,9 +78,8 @@ void UpdatePlayer()
 
 	case STATE_DEAD:
 		obj_player.velocity.x = 0;
-		Play::ColourSprite("walk", Play::cRed);
-		Play::ColourSprite("scientist_idle", Play::cRed);	
-		Point2f camPos = Play::GetCameraPosition();
+		//Play::ColourSprite("walk", Play::cRed);
+		//Play::ColourSprite("scientist_idle", Play::cRed);	
 		Play::DrawFontText("132", "PRESS SPACEBAR TO RESTART", 
 			{(camPos.x + DISPLAY_WIDTH/2), DISPLAY_HEIGHT/2}, Play::CENTRE);
 		
@@ -92,6 +94,22 @@ void UpdatePlayer()
 		}
 		
 		break;
+
+	case STATE_LEAVING:
+		obj_player.velocity = { 0, 0 };
+		if (playerVisible)
+		{
+			Play::SetSprite(obj_player, "exit_level", 0.2f);
+		}
+		if (Play::IsAnimationComplete(obj_player))
+		{
+			playerVisible = false;
+			Play::SetSprite(obj_player, "blank", 0);
+			Play::DrawFontText("151", "LEVEL COMPLETE", { camPos.x + DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2 }, Play::CENTRE);
+
+		}
+		break;
+
 	}
 
 	if (playerState.direction)
@@ -136,19 +154,19 @@ void HandlePlayerControls()
 	{
 		playerState.state = STATE_WALK;
 		obj_player.velocity.x = 0;
-		if (Play::KeyPressed(VK_UP))
+		if (Play::KeyPressed('W'))
 		{
 			obj_player.velocity.y = -17;
 		}
 	}
 
-	if (Play::KeyDown(VK_LEFT))
+	if (Play::KeyDown('A'))
 	{
-		obj_player.velocity.x = -7;
+		obj_player.velocity.x = -4;
 	}
-	if (Play::KeyDown(VK_RIGHT))
+	if (Play::KeyDown('D'))
 	{
-		obj_player.velocity.x = 7;
+		obj_player.velocity.x = 4;
 	}
 
 	if (obj_player.velocity.x == 0 && obj_player.velocity.y == 0)
@@ -156,19 +174,20 @@ void HandlePlayerControls()
 		playerState.state = STATE_IDLE;
 	}
 
-
+	
 	if (gamePlayState.damage_timer >= 2. && gamePlayState.stopwatch - gamePlayState.damage_timer <= 2.)
 	{
-		Play::ColourSprite("walk", Play::cRed);
-		Play::ColourSprite("scientist_idle", Play::cRed);
+		//Play::ColourSprite("walk", Play::cRed);
+		//Play::ColourSprite("scientist_idle", Play::cRed);
 		playerState.hurt = true;
 	}
 	else
 	{
-		Play::ColourSprite("walk", Play::cWhite);
-		Play::ColourSprite("scientist_idle", Play::cWhite);
+		//Play::ColourSprite("walk", Play::cWhite);
+		//Play::ColourSprite("scientist_idle", Play::cWhite);
 		playerState.hurt = false;
 	}
+	
 }
 
 
@@ -238,11 +257,11 @@ void SwingMechanic()
 
 		if (playerState.direction == false)
 		{
-			theta += 0.04f;
+			theta += 0.02f;
 		}
 		else
 		{
-			theta -= 0.04f;
+			theta -= 0.02f;
 		}
 
 		if (obj_player.pos.x <= obj_anchor.pos.x)

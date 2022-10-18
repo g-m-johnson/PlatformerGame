@@ -14,6 +14,8 @@ enum GameObjectType
 	TYPE_ENEMY,
 	TYPE_FLASK,
 	TYPE_HEALTH,
+	TYPE_DOOR,
+	TYPE_COMPUTER,
 };
 
 enum CharacterState
@@ -24,6 +26,7 @@ enum CharacterState
 	STATE_SWING,
 	STATE_WOUNDED,
 	STATE_DEAD,
+	STATE_LEAVING,
 };
 
 struct GamePlayState
@@ -32,7 +35,6 @@ struct GamePlayState
 	float init_time = 0;
 	float damage_timer = 0;
 	int noteObjectId = 0;
-	bool showMenu = false;
 };
 extern GamePlayState gamePlayState, resetGame;
 
@@ -44,6 +46,7 @@ struct PlayerState
 	Point2f startingPoint = { 120, 184 };
 	CharacterState state = STATE_WALK;
 	bool direction = false; //true = left, false = right
+	bool exitActive = false;
 };
 extern PlayerState playerState, resetPlayerState;
 
@@ -58,19 +61,34 @@ extern EnemyState enemyState, resetEnemyState;
 
 
 void ControlScreen();
+
 // Draws the coordinates of the cursor on screen
 void TempCursorPos();
+
 // Creates platforms given a list of positions
 void CreatePlatforms();
+
 void CreateAnchor();
+
 void UpdateRopeSwing();
 // Draws a target a set distance away from the origin of the sprite
+
 void DrawTarget();
+
 void UpdateAmmo();
+
 // Pieces platform sprites together 
 void DrawPlatforms();
+
 // Draws a sprite as a reflection in the Y axis
 void DrawObjectYFlipped(GameObject&);
+
 void CreateCollectables();
+
 void UpdateCollectables();
+
 void HandleUI();
+
+void CreateExitObjects();
+
+void UpdateExitObjects();

@@ -21,21 +21,26 @@ void MainGameEntry(PLAY_IGNORE_COMMAND_LINE)
 	CreateCollectables();
 	CreateAnchor();
 	CreateEnemies();
+	CreateExitObjects();
 }
 
 bool MainGameUpdate(float elapsedTime)
 {
 	Play::DrawBackground();
 	gamePlayState.stopwatch += elapsedTime;
+	Play::DrawSprite("door", {160,278}, 0);
 	DrawPlatforms();
-	TempCursorPos();
-	UpdatePlayer();
-	UpdateAmmo();
+	
 	UpdateCollectables();
 	UpdateEnemies();	
 	UpdateRopeSwing();
+	UpdateExitObjects();
+	UpdatePlayer();
+	UpdateAmmo();
+
+	TempCursorPos();
 	HandleUI();
-	//ControlScreen();
+	ControlScreen();
 	Play::PresentDrawingBuffer();
 	return Play::KeyDown(VK_ESCAPE);
 }
@@ -56,7 +61,7 @@ void CreatePlatforms()
 		{335, 196},
 		{950, 427},
 		{1230, 427},
-		{1730, 680},
+		{1630, 680},
 		{1920, 680},
 		{1260, 680},
 		{2100, 520},
@@ -220,8 +225,8 @@ void CreateCollectables()
 	Play::SetSpriteOrigin("flask", 36, 73);
 	std::vector<Point2D> flaskPositions
 	{
-		{1215, 600},
-		{3200, 600}
+		//{1215, 600},
+		//{3200, 600}
 	};
 	std::vector<int> vFlasks(flaskPositions.size());
 	int n = 0;
@@ -264,6 +269,10 @@ void UpdateCollectables()
 			Play::DestroyGameObject(id);
 			playerState.playerXP++;
 		}
+	}
+	if (vFlasks.size() == 0)
+	{
+		playerState.exitActive = true;
 	}
 
 	//Health adds to player HP
@@ -322,20 +331,58 @@ void UpdateRopeSwing()
 
 void ControlScreen()
 {
-	if (Play::KeyPressed(VK_TAB) && !gamePlayState.showMenu)
+	if (Play::KeyDown('I'))
 	{
-		gamePlayState.showMenu = true;
-	}
-	if (Play::KeyPressed(VK_TAB) && gamePlayState.showMenu)
-	{
-		gamePlayState.showMenu = false;
-	}
-
-	if (gamePlayState.showMenu)
-	{
-		Play::DrawRect({ 100, 100 }, { 1180, 620 }, Play::cWhite, true);
-		Play::DrawFontText("132", "CONTROLS:\n", { 640, 200 }, Play::CENTRE);
-		Play::DrawFontText("132", "R/L ARROW KEYS TO WALK\n", { 640, 300 }, Play::CENTRE);
-		Play::DrawFontText("132", "SPACEBAR WHEN NEAR ROPE TO SWING\n", { 640, 400 }, Play::CENTRE);
+		Play::DrawRect({ Play::GetCameraPosition().x + 100, 100 }, { Play::GetCameraPosition().x + 1180, 620 }, Play::cBlack, true);
+		Play::DrawFontText("132", "CONTROLS:", { Play::GetCameraPosition().x + 640, 200 }, Play::CENTRE);
+		Play::DrawFontText("64", "A/D TO WALK", { Play::GetCameraPosition().x + 640, 300 }, Play::CENTRE);
+		Play::DrawFontText("64", "W TO JUMP", { Play::GetCameraPosition().x + 640, 400 }, Play::CENTRE);
+		Play::DrawFontText("64", "SPACEBAR WHEN NEAR ROPE TO SWING", { Play::GetCameraPosition().x + 640, 500 }, Play::CENTRE);
 	}
 }
+
+
+void CreateExitObjects()
+{
+	Play::CreateGameObject(TYPE_DOOR, { 2555, 278 }, 20, "door");
+
+	int id = Play::CreateGameObject(TYPE_COMPUTER, { 2370, 300 }, 50, "computer");
+	GameObject& obj_computer = Play::GetGameObject(id);
+	Play::SetSprite(obj_computer, "computer", 0.1f);
+}
+
+bool hasCollided = false;
+void UpdateExitObjects()
+{
+	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
+	GameObject& obj_door = Play::GetGameObjectByType(TYPE_DOOR);
+	GameObject& obj_computer = Play::GetGameObjectByType(TYPE_COMPUTER);
+	Play::UpdateGameObject(obj_door);
+	Play::DrawObject(obj_door);
+	Play::UpdateGameObject(obj_computer);
+	Play::DrawObject(obj_computer);
+
+	if (playerState.exitActive && Play::IsColliding(obj_computer, obj_player) 
+		&& !hasCollided)
+	{
+		Play::SetSprite(obj_door, "door", 0.2f);
+		hasCollided = true;
+	}
+
+	if (hasCollided)
+	{
+		obj_player.radius = 20;
+		if (Play::IsAnimationComplete(obj_door))
+		{
+			obj_door.frame = 7;
+			Play::SetSprite(obj_door, "door", 0);
+		}
+
+		if (Play::IsAnimationComplete(obj_door) && 
+			Play::IsColliding(obj_player, obj_door))
+		{
+			playerState.state = STATE_LEAVING;
+		}
+	}
+}
+//------------------------------------------------------------------------------
