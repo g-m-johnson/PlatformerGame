@@ -109,7 +109,7 @@ void UpdateEnemyMovement()
 	GameObject& obj_platform = Play::GetGameObject(vPlatforms.at(6));
 
 	if (obj_enemy.pos.x <= (obj_platform.pos.x) ||
-		obj_enemy.pos.x >= (obj_platform.pos.x + Play::GetSpriteWidth("spr_platform")))
+		obj_enemy.pos.x >= (obj_platform.pos.x + 180))
 	{
 		obj_enemy.velocity.x = -(obj_enemy.velocity.x);
 	}
