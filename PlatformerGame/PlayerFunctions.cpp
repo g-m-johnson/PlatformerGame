@@ -6,6 +6,8 @@
 
 PlayerState playerState, resetPlayerState;
 
+
+//------------------------------------------------------------------------------
 bool playerVisible = true;
 void UpdatePlayer()
 {
@@ -39,13 +41,14 @@ void UpdatePlayer()
 	case STATE_WALK:
 		Play::SetSprite(obj_player, "spr_walk", 0.2f);
 		HandlePlayerControls();
-		DrawTarget();
+		//DrawTarget();
 		break;
 
 	case STATE_IDLE:
 		Play::SetSprite(obj_player, "scientist_idle", 0.2f);
 		HandlePlayerControls();
-		DrawTarget();
+		//DrawTarget();
+		CheckForAiming();
 		break;
 
 	case STATE_JUMP:
@@ -95,6 +98,17 @@ void UpdatePlayer()
 		
 		break;
 
+	case STATE_THROW:
+
+		DrawTarget();
+
+		if (Play::IsAnimationComplete(obj_player))
+		{
+			playerState.state = STATE_IDLE;
+		}
+
+		break;
+
 	case STATE_LEAVING:
 		obj_player.velocity = { 0, 0 };
 		if (playerVisible)
@@ -126,7 +140,7 @@ void UpdatePlayer()
 
 
 
-
+//------------------------------------------------------------------------------
 
 void HandlePlayerControls()
 {
@@ -191,8 +205,10 @@ void HandlePlayerControls()
 }
 
 
-
-
+//------------------------------------------------------------------------------
+/*
+* Some very simple AABB collision stuff
+*/
 
 bool PlayerAndPlatformCollision()
 {
@@ -229,8 +245,10 @@ bool PlayerAndPlatformCollision()
 }
 
 
-
-
+//------------------------------------------------------------------------------
+/*
+* 
+*/
 
 void SwingMechanic()
 {
@@ -295,29 +313,97 @@ void SwingMechanic()
 	}
 }
 
-void DrawRopeSwing(int id, int ropeState, float angle)
+//------------------------------------------------------------------------------
+/*
+* DEFENSE FUNCTIONS
+*/
+
+void CheckForAiming()
 {
-	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
-
-	Play::SetSpriteOrigin("long_pieces_with_wires", 10, 0);
-	Play::SetSpriteOrigin("long_piece", 10, 0);
-
-	GameObject& obj_anchor = Play::GetGameObject(id);
-
-	switch (ropeState)
+	if (Play::GetMouseButton(Play::LEFT))
 	{
-	// rope not being interacted with
-	case 1:
-		Play::DrawSprite("long_piece", { obj_anchor.pos.x, 0 }, 0);
-		Play::DrawSprite("long_pieces_with_wires", { obj_anchor.pos.x, (Play::GetSpriteHeight("long_piece")) }, 0);
-		break;
-	// player on swing
-	case 2:
-		Play::DrawSpriteRotated("long_piece", obj_anchor.pos, 0, angle);
-		Point2D secondSpritePos;
-		secondSpritePos.x = obj_anchor.pos.x - Play::GetSpriteHeight("long_piece") * sin(angle);
-		secondSpritePos.y = obj_anchor.pos.y + Play::GetSpriteHeight("long_piece") * cos(angle);
-		Play::DrawSpriteRotated("long_pieces_with_wires", secondSpritePos, 0, angle);
-		break;
+		playerState.state = STATE_THROW;
 	}
 }
+
+bool aiming = false;
+void DrawTarget()
+{
+	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
+	Point2D mousePos = Play::GetMousePos();
+	Point2D camPos = Play::GetCameraPosition();
+	float dx = (camPos.x + mousePos.x) - obj_player.pos.x;
+	float dy = mousePos.y - obj_player.pos.y;
+	float theta = atan(dy / dx);
+
+	// I got very confused about angles here
+	Point2D targetPoint = { obj_player.pos.x + (100 * cos(theta)),
+			obj_player.pos.y + (100 * sin(theta)) };
+	if ((mousePos.x + camPos.x) < obj_player.pos.x)
+	{
+		targetPoint = { obj_player.pos.x - (100 * cos(theta)),
+			obj_player.pos.y - (100 * sin(theta)) };
+	}
+
+
+	// Target only appears when left mouse button is pressed
+	if (Play::GetMouseButton(Play::LEFT))
+	{
+		// Drawing target to screen
+		Play::DrawCircle(targetPoint, 10, Play::cWhite);
+		Play::DrawLine({ targetPoint.x + 13, targetPoint.y },
+			{ targetPoint.x - 13, targetPoint.y }, Play::cWhite);
+		Play::DrawLine({ targetPoint.x, targetPoint.y + 13 },
+			{ targetPoint.x, targetPoint.y - 13 }, Play::cWhite);
+
+		obj_player.frame = 1;
+		Play::SetSprite(obj_player, "throw", 0);
+
+		aiming = true;
+	}
+
+	// Ammo thrown after left mouse button is released
+	if (!Play::GetMouseButton(Play::LEFT) && aiming == true)
+	{
+		int id = Play::CreateGameObject(TYPE_AMMO, obj_player.pos, 5, "round_bottle_red");
+		GameObject& obj_ammo = Play::GetGameObject(id);
+		obj_ammo.rotSpeed = 0.1f;
+
+		Play::SetSprite(obj_player, "throw", 0.33f);
+
+		if (targetPoint.x >= obj_player.pos.x)
+		{
+			Play::SetGameObjectDirection(obj_ammo, 8, theta + PLAY_PI / 2);
+		}
+		else
+		{
+			Play::SetGameObjectDirection(obj_ammo, 8, theta - PLAY_PI / 2);
+		}
+		aiming = false;
+	}
+
+}
+
+
+void UpdateAmmo()
+{
+	std::vector<int> vAmmo = Play::CollectGameObjectIDsByType(TYPE_AMMO);
+	for (int id : vAmmo)
+	{
+		GameObject& obj_ammo = Play::GetGameObject(id);
+
+		Play::UpdateGameObject(obj_ammo);
+		Play::DrawObjectRotated(obj_ammo);
+
+		if (!Play::IsVisible(obj_ammo))
+		{
+			Play::DestroyGameObject(id);
+		}
+	}
+}
+
+
+
+//------------------------------------------------------------------------------
+
+

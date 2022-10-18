@@ -138,6 +138,9 @@
     <ClInclude Include="Play.h" />
     <ClInclude Include="PlayerFunctions.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="Reminders.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -1,0 +1,11 @@
+//------------------------------------------------------------------------------
+18/10/22:
+Need to make sure that player can only aim/throw in the direction that the 
+sprite is facing in.
+
+Need to sort out enemy functionality, e.g. make sure there is more than one and 
+they change animations when hit, etc.
+
+Could add a sprite for when the player is hurt
+
+//------------------------------------------------------------------------------

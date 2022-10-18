@@ -26,6 +26,7 @@ enum CharacterState
 	STATE_SWING,
 	STATE_WOUNDED,
 	STATE_DEAD,
+	STATE_THROW,
 	STATE_LEAVING,
 };
 
@@ -59,36 +60,51 @@ struct EnemyState
 };
 extern EnemyState enemyState, resetEnemyState;
 
+//------------------------------------------------------------------------------
 
+// Draws health bar in top left corner
+void HandleUI();
+
+// Draws the user input controls to screen when 'I' is pressed
 void ControlScreen();
 
 // Draws the coordinates of the cursor on screen
 void TempCursorPos();
 
+
+
 // Creates platforms given a list of positions
 void CreatePlatforms();
-
-void CreateAnchor();
-
-void UpdateRopeSwing();
-// Draws a target a set distance away from the origin of the sprite
-
-void DrawTarget();
-
-void UpdateAmmo();
 
 // Pieces platform sprites together 
 void DrawPlatforms();
 
-// Draws a sprite as a reflection in the Y axis
-void DrawObjectYFlipped(GameObject&);
+
+
+// Creates the anchor that the player can swing from
+void CreateAnchor();
+
+// Updates swing when it is not in use by the player
+void UpdateRopeSwing();
+
+// Puts sprites together for rope swing
+void DrawRopeSwing(int id, int choice, float angle);
+
+
 
 void CreateCollectables();
 
 void UpdateCollectables();
 
-void HandleUI();
+
 
 void CreateExitObjects();
 
 void UpdateExitObjects();
+
+
+
+// Draws a sprite as a reflection in the Y axis
+void DrawObjectYFlipped(GameObject&);
+
+//------------------------------------------------------------------------------
