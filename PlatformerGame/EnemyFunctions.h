@@ -2,4 +2,4 @@
 
 void CreateEnemies();
 void UpdateEnemies();
-void UpdateEnemyMovement();
+void UpdateEnemyMovement(GameObject&);

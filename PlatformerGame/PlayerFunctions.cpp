@@ -80,22 +80,7 @@ void UpdatePlayer()
 		break;
 
 	case STATE_DEAD:
-		obj_player.velocity.x = 0;
-		//Play::ColourSprite("walk", Play::cRed);
-		//Play::ColourSprite("scientist_idle", Play::cRed);	
-		Play::DrawFontText("132", "PRESS SPACEBAR TO RESTART", 
-			{(camPos.x + DISPLAY_WIDTH/2), DISPLAY_HEIGHT/2}, Play::CENTRE);
-		
-		if (Play::KeyPressed(VK_SPACE))
-		{
-			playerState = resetPlayerState;
-			obj_player.pos = playerState.startingPoint;
-			Play::SetCameraPosition({ 0, 0 });
-
-			gamePlayState = resetGame;
-			enemyState = resetEnemyState;
-		}
-		
+		GameReset();
 		break;
 
 	case STATE_THROW:

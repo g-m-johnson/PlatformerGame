@@ -10,4 +10,7 @@ Could add a sprite for when the player is hurt
 
 //------------------------------------------------------------------------------
 19/10/22:
-Need to improve the AimProjectile() function when I am more sane.
+Need to improve the AimProjectile() function when I'm more sane.
+
+Ensure that instant death doesn't happen upon colliding with an enemy whilst not
+in STATE_WALK/STATE_IDLE

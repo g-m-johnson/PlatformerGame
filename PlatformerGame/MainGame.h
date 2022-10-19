@@ -44,7 +44,7 @@ struct PlayerState
 	int playerHP = 3;
 	int playerXP = 0;
 	bool hurt = false;
-	Point2f startingPoint = { 120, 184 };
+	Point2f startingPoint = { 160, 315 };
 	CharacterState state = STATE_WALK;
 	bool direction = false; //true = left, false = right
 	bool exitActive = false;
@@ -54,7 +54,7 @@ extern PlayerState playerState, resetPlayerState;
 struct EnemyState
 {
 	int enemyHP = 50;
-	int platformNumber = 0;
+	std::vector <int> platformNumbers {6, 13};
 	CharacterState state = STATE_WALK;
 	bool direction = false;
 };
@@ -106,5 +106,9 @@ void UpdateExitObjects();
 
 // Draws a sprite as a reflection in the Y axis
 void DrawObjectYFlipped(GameObject&);
+
+
+
+void GameReset();
 
 //------------------------------------------------------------------------------

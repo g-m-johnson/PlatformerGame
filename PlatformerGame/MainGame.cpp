@@ -14,10 +14,12 @@ void MainGameEntry(PLAY_IGNORE_COMMAND_LINE)
 {
 	Play::CreateManager(DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_SCALE);
 	Play::LoadBackground("Data\\Background\\lab_background.png");
+
 	Play::CreateGameObject(TYPE_PLAYER, playerState.startingPoint, 50, "walk");
 	Play::CentreAllSpriteOrigins();
 	Play::StartAudioLoop("Machine-Madness");
 	Play::SetSpriteOrigin("round_bottle_red", 11, 30);
+
 	CreatePlatforms();
 	CreateCollectables();
 	CreateAnchor();
@@ -118,12 +120,12 @@ void CreatePlatforms()
 		{335, 196},
 		{950, 427},
 		{1230, 427},
-		{1630, 680},
+		{1620, 680},
 		{1920, 680},
 		{1260, 680},
 		{2100, 520},
 		{2280, 360},
-		{1575, 90},
+		{1585, 150},
 		{2465, 360},
 		{3110, 400},
 		{3110, 665},
@@ -252,7 +254,7 @@ void CreateCollectables()
 
 	std::vector<Point2D> healthPositions
 	{
-		{1600, 47}
+		{1650, 100}
 	};
 	std::vector<int> vHealth(healthPositions.size());
 	int m = 0;
@@ -343,6 +345,10 @@ void UpdateExitObjects()
 		Play::DrawDebugText({ 2370, 200 }, "PRESS SPACEBAR TO INPUT DATA", Play::cWhite, Play::CENTRE);
 		Play::DrawDebugText({ 2370, 220 }, "INTO THE DOOR TERMINAL", Play::cWhite, Play::CENTRE);
 	}
+	else
+	{
+		Play::DrawDebugText({ 2370, 220 }, "NEED MORE DATA TO OPEN DOOR", Play::cWhite, Play::CENTRE);
+	}
 
 
 	if (playerState.exitActive && Play::IsColliding(obj_computer, obj_player) 
@@ -382,7 +388,7 @@ void UpdateExitObjects()
 * MATHS FUNCTIONS
 */
 
-//Draws object flipped in the Y axis
+//Draws object flipped horizontally
 void DrawObjectYFlipped(GameObject& obj)
 {
 	Matrix2D flipMat = MatrixIdentity();
@@ -392,4 +398,46 @@ void DrawObjectYFlipped(GameObject& obj)
 
 	Play::DrawSpriteTransformed(obj.spriteId, flipMat, obj.frame);
 }
+
+
+
+//------------------------------------------------------------------------------
+/*
+* RESET GAME 
+*/
+void GameReset()
+{
+	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
+	Point2D camPos = Play::GetCameraPosition();
+	obj_player.velocity.x = 0;
+	Play::SetSprite(obj_player, "die", 0.2);
+
+	if (Play::IsAnimationComplete(obj_player))
+	{
+		obj_player.frame = 5;
+		obj_player.animSpeed = 0.0f;
+		Play::DrawFontText("132", "PRESS SPACEBAR TO RESTART",
+			{ (camPos.x + DISPLAY_WIDTH / 2), DISPLAY_HEIGHT / 2 }, Play::CENTRE);
+
+		if (Play::KeyPressed(VK_SPACE))
+		{
+			playerState = resetPlayerState;
+			obj_player.pos = playerState.startingPoint;
+			Play::SetCameraPosition({ 0, 0 });
+
+			gamePlayState = resetGame;
+			enemyState = resetEnemyState;
+
+			Play::DestroyGameObjectsByType(TYPE_ENEMY);
+			Play::DestroyGameObjectsByType(TYPE_MOLECULE);
+			Play::DestroyGameObjectsByType(TYPE_HEALTH);
+
+			CreateEnemies();
+			CreateCollectables();
+		}
+	}
+	
+}
+
+
 //------------------------------------------------------------------------------

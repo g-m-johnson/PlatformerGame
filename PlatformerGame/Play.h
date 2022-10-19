@@ -1501,6 +1501,7 @@ struct GameObject
 	int radius{ 0 };
 	float scale{ 1 };
 	// Add your own data members here if you want to
+	int associatedPlatformId{ 0 };
 	PLAY_ADD_GAMEOBJECT_MEMBERS
 
 		int GetId() { return m_id; }
