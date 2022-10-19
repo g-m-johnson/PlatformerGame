@@ -11,7 +11,9 @@ void SwingMechanic();
 void CheckForAiming();
 
 // Draws a target a set distance away from the origin of the sprite
-void DrawTarget();
+void AimProjectile();
+
+Point2D DrawTarget(float);
 
 // Updates and draws all active ammo
 void UpdateAmmo();

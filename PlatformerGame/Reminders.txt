@@ -9,3 +9,5 @@ they change animations when hit, etc.
 Could add a sprite for when the player is hurt
 
 //------------------------------------------------------------------------------
+19/10/22:
+Need to improve the AimProjectile() function when I am more sane.

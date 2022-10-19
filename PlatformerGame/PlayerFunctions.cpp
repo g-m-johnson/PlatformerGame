@@ -100,7 +100,7 @@ void UpdatePlayer()
 
 	case STATE_THROW:
 
-		DrawTarget();
+		AimProjectile();
 
 		if (Play::IsAnimationComplete(obj_player))
 		{
@@ -327,23 +327,47 @@ void CheckForAiming()
 }
 
 bool aiming = false;
-void DrawTarget()
+void AimProjectile()
 {
 	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
 	Point2D mousePos = Play::GetMousePos();
 	Point2D camPos = Play::GetCameraPosition();
 	float dx = (camPos.x + mousePos.x) - obj_player.pos.x;
 	float dy = mousePos.y - obj_player.pos.y;
-	float theta = atan(dy / dx);
+	float theta = atan((dy) / (dx));
+
+	if (playerState.direction)
+	{
+		if ((camPos.x + mousePos.x) > obj_player.pos.x)
+		{
+			if (mousePos.y > obj_player.pos.y)
+				theta = PLAY_PI / 2;
+			else
+				theta = 3 * PLAY_PI / 2;
+		}
+	}
+	else
+	{
+		if ((camPos.x + mousePos.x) < obj_player.pos.x)
+		{
+			if (mousePos.y > obj_player.pos.y)
+				theta = 3 * PLAY_PI / 2;
+			else
+				theta = PLAY_PI / 2;
+		}
+	}
+
 
 	// I got very confused about angles here
 	Point2D targetPoint = { obj_player.pos.x + (100 * cos(theta)),
 			obj_player.pos.y + (100 * sin(theta)) };
+	
 	if ((mousePos.x + camPos.x) < obj_player.pos.x)
 	{
 		targetPoint = { obj_player.pos.x - (100 * cos(theta)),
 			obj_player.pos.y - (100 * sin(theta)) };
 	}
+	
 
 
 	// Target only appears when left mouse button is pressed
@@ -382,6 +406,12 @@ void DrawTarget()
 		aiming = false;
 	}
 
+}
+
+
+Point2D DrawTarget(float angle)
+{
+	return { 0, 0 };
 }
 
 

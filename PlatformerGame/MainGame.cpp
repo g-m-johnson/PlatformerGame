@@ -14,7 +14,7 @@ void MainGameEntry(PLAY_IGNORE_COMMAND_LINE)
 {
 	Play::CreateManager(DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_SCALE);
 	Play::LoadBackground("Data\\Background\\lab_background.png");
-	Play::CreateGameObject(TYPE_PLAYER, playerState.startingPoint, 50, "player");
+	Play::CreateGameObject(TYPE_PLAYER, playerState.startingPoint, 50, "walk");
 	Play::CentreAllSpriteOrigins();
 	Play::StartAudioLoop("Machine-Madness");
 	Play::SetSpriteOrigin("round_bottle_red", 11, 30);
@@ -51,6 +51,7 @@ int MainGameExit(void)
 	Play::DestroyManager();
 	return PLAY_OK;
 }
+
 
 
 // FUNCTIONS
@@ -102,6 +103,8 @@ void TempCursorPos()
 	Play::DrawFontText("64px", std::to_string(camPos.x + mousePos.x) + ", " + 
 		std::to_string(mousePos.y), textPos);
 }
+
+
 
 //------------------------------------------------------------------------------
 /*
@@ -159,6 +162,8 @@ void DrawPlatforms()
 	}
 }
 
+
+
 //------------------------------------------------------------------------------
 /*
 * ROPE-SWING FUNCTIONS
@@ -176,7 +181,7 @@ void CreateAnchor()
 	int n = 0;
 	for (int id : vAnchors)
 	{
-		id = Play::CreateGameObject(TYPE_ANCHORPOINT, anchorPositions.at(n), 250, "anchor");
+		id = Play::CreateGameObject(TYPE_ANCHORPOINT, anchorPositions.at(n), 250, "blank");
 		n++;
 	}
 }
@@ -222,25 +227,26 @@ void DrawRopeSwing(int id, int ropeState, float angle)
 }
 
 
+
 //------------------------------------------------------------------------------
 /*
 * MISC. OBJECTS FUNCTIONS
 */
 void CreateCollectables()
 {
-	Play::SetSpriteOrigin("flask", 36, 73);
-	std::vector<Point2D> flaskPositions
+	Play::SetSpriteOrigin("molecule", 36, 73);
+	std::vector<Point2D> moleculePositions
 	{
 		{1215, 600},
 		{3200, 600}
 	};
-	std::vector<int> vFlasks(flaskPositions.size());
+	std::vector<int> vMolecules(moleculePositions.size());
 	int n = 0;
-	for (int id : vFlasks)
+	for (int id : vMolecules)
 	{
-		id = Play::CreateGameObject(TYPE_FLASK, { 0, 0 }, 30, "flask");
-		GameObject& obj_flask = Play::GetGameObject(id);
-		obj_flask.pos = flaskPositions.at(n);
+		id = Play::CreateGameObject(TYPE_MOLECULE, { 0, 0 }, 30, "molecule");
+		GameObject& obj_molecule = Play::GetGameObject(id);
+		obj_molecule.pos = moleculePositions.at(n);
 		n++;
 	}
 
@@ -263,21 +269,21 @@ void UpdateCollectables()
 {
 	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
 
-	std::vector <int> vFlasks = Play::CollectGameObjectIDsByType(TYPE_FLASK);
-	for (int id : vFlasks)
+	std::vector <int> vMolecules = Play::CollectGameObjectIDsByType(TYPE_MOLECULE);
+	for (int id : vMolecules)
 	{
-		GameObject& obj_flask = Play::GetGameObject(id);
-		Play::UpdateGameObject(obj_flask);
-		Play::DrawObject(obj_flask);
+		GameObject& obj_molecule = Play::GetGameObject(id);
+		Play::UpdateGameObject(obj_molecule);
+		Play::DrawObject(obj_molecule);
 
-		if (Play::IsColliding(obj_player, obj_flask))
+		if (Play::IsColliding(obj_player, obj_molecule))
 		{
 			Play::DestroyGameObject(id);
 			playerState.playerXP++;
 		}
 	}
 
-	if (vFlasks.size() == 0)
+	if (vMolecules.size() == 0)
 	{
 		playerState.exitActive = true;
 	}
@@ -332,13 +338,20 @@ void UpdateExitObjects()
 	Play::UpdateGameObject(obj_computer);
 	Play::DrawObject(obj_computer);
 
+	if (playerState.exitActive)
+	{
+		Play::DrawDebugText({ 2370, 200 }, "PRESS SPACEBAR TO INPUT DATA", Play::cWhite, Play::CENTRE);
+		Play::DrawDebugText({ 2370, 220 }, "INTO THE DOOR TERMINAL", Play::cWhite, Play::CENTRE);
+	}
+
+
 	if (playerState.exitActive && Play::IsColliding(obj_computer, obj_player) 
-		&& !hasCollided)
+		&& !hasCollided && Play::KeyPressed(VK_SPACE))
 	{
 		Play::SetSprite(obj_door, "door_strip", 0.2f);
 		hasCollided = true;
 	}
-	
+
 
 	if (hasCollided)
 	{
@@ -361,6 +374,8 @@ void UpdateExitObjects()
 		Play::DrawSprite("door_switch_control_off", { 2555, 166 }, 0);
 	}
 }
+
+
 
 //------------------------------------------------------------------------------
 /*
