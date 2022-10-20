@@ -24,8 +24,7 @@ void UpdatePlayer()
 	}
 
 	if (playerState.state != STATE_DEAD && 
-		Play::IsLeavingDisplayArea(obj_player, Play::VERTICAL) 
-		&& obj_player.pos.y > 700)
+		Play::IsLeavingDisplayArea(obj_player, Play::VERTICAL) && obj_player.pos.y > 700)
 	{
 		playerState.playerHP = 0;
 	}
@@ -38,18 +37,19 @@ void UpdatePlayer()
 
 	switch (playerState.state)
 	{
+
 	case STATE_WALK:
 		Play::SetSprite(obj_player, "spr_walk", 0.2f);
 		HandlePlayerControls();
-		//DrawTarget();
 		break;
+
 
 	case STATE_IDLE:
 		Play::SetSprite(obj_player, "scientist_idle", 0.2f);
 		HandlePlayerControls();
-		//DrawTarget();
 		CheckForAiming();
 		break;
+
 
 	case STATE_JUMP:
 		HandlePlayerControls();
@@ -68,7 +68,9 @@ void UpdatePlayer()
 		}
 		break;
 
+
 	case STATE_SWING:
+
 		for (int id : vAnchors)
 		{
 			if (id != gamePlayState.noteObjectId)
@@ -76,12 +78,15 @@ void UpdatePlayer()
 				DrawRopeSwing(id, 1, 0);
 			}
 		}
+
 		SwingMechanic();
 		break;
 
+
 	case STATE_DEAD:
-		GameReset();
+		PlayerDeath();
 		break;
+
 
 	case STATE_THROW:
 
@@ -94,6 +99,7 @@ void UpdatePlayer()
 
 		break;
 
+
 	case STATE_LEAVING:
 		obj_player.velocity = { 0, 0 };
 		if (playerVisible)
@@ -104,12 +110,17 @@ void UpdatePlayer()
 		{
 			playerVisible = false;
 			Play::SetSprite(obj_player, "blank", 0);
-			Play::DrawFontText("151", "LEVEL COMPLETE", { camPos.x + DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2 }, Play::CENTRE);
+			Play::DrawFontText("151", "LEVEL COMPLETE!", { camPos.x + DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2 - 60}, Play::CENTRE);
 
+			Play::DrawFontText("151", "PRESS SPACEBAR TO PLAY AGAIN", { camPos.x + DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2 + 60 }, Play::CENTRE);
+			if (Play::KeyPressed(VK_SPACE))
+			{
+				GameReset();
+			}
 		}
 		break;
-
 	}
+
 
 	if (playerState.direction)
 	{
@@ -174,16 +185,13 @@ void HandlePlayerControls()
 	}
 
 	
-	if (gamePlayState.damage_timer >= 2. && gamePlayState.stopwatch - gamePlayState.damage_timer <= 2.)
+	if (gamePlayState.damage_timer >= 2. && 
+		gamePlayState.stopwatch - gamePlayState.damage_timer <= 2.)
 	{
-		//Play::ColourSprite("walk", Play::cRed);
-		//Play::ColourSprite("scientist_idle", Play::cRed);
 		playerState.hurt = true;
 	}
 	else
 	{
-		//Play::ColourSprite("walk", Play::cWhite);
-		//Play::ColourSprite("scientist_idle", Play::cWhite);
 		playerState.hurt = false;
 	}
 	

@@ -25,6 +25,7 @@ void MainGameEntry(PLAY_IGNORE_COMMAND_LINE)
 	CreateAnchor();
 	CreateEnemies();
 	CreateExitObjects();
+
 }
 
 bool MainGameUpdate(float elapsedTime)
@@ -41,7 +42,7 @@ bool MainGameUpdate(float elapsedTime)
 	UpdatePlayer();
 	UpdateAmmo();
 
-	TempCursorPos();
+	//TempCursorPos();
 	HandleUI();
 	ControlScreen();
 	Play::PresentDrawingBuffer();
@@ -53,6 +54,7 @@ int MainGameExit(void)
 	Play::DestroyManager();
 	return PLAY_OK;
 }
+
 
 
 
@@ -79,12 +81,12 @@ void HandleUI()
 	}
 
 
-	Play::DrawFontText("64", "PRESS I TO VIEW CONTROLS", { camPos.x + DISPLAY_WIDTH - 20, camPos.y + 50 }, Play::RIGHT);
+	Play::DrawFontText("64", "PRESS C TO VIEW CONTROLS", { camPos.x + DISPLAY_WIDTH - 20, camPos.y + 50 }, Play::RIGHT);
 }
 
 void ControlScreen()
 {
-	if (Play::KeyDown('I'))
+	if (Play::KeyDown('C'))
 	{
 		Play::DrawRect({ Play::GetCameraPosition().x + 100, 100 }, { Play::GetCameraPosition().x + 1180, 620 }, Play::cBlack, true);
 		Play::DrawFontText("132", "CONTROLS:", { Play::GetCameraPosition().x + 640, 175 }, Play::CENTRE);
@@ -128,7 +130,7 @@ void CreatePlatforms()
 		{1585, 150},
 		{2465, 360},
 		{3110, 400},
-		{3110, 665},
+		{3160, 665},
 		{3750, 293}
 	};
 	std::vector <int> vPlatforms(platformPositions.size());
@@ -329,6 +331,7 @@ void CreateExitObjects()
 	Play::SetSprite(obj_computer, "computer", 0.1f);
 }
 
+
 bool hasCollided = false;
 void UpdateExitObjects()
 {
@@ -342,12 +345,12 @@ void UpdateExitObjects()
 
 	if (playerState.exitActive)
 	{
-		Play::DrawDebugText({ 2370, 200 }, "PRESS SPACEBAR TO INPUT DATA", Play::cWhite, Play::CENTRE);
-		Play::DrawDebugText({ 2370, 220 }, "INTO THE DOOR TERMINAL", Play::cWhite, Play::CENTRE);
+		Play::DrawDebugText({ 2370, 200 }, "PRESS SPACEBAR TO INPUT DATA");
+		Play::DrawDebugText({ 2370, 220 }, "INTO THE DOOR TERMINAL");
 	}
 	else
 	{
-		Play::DrawDebugText({ 2370, 220 }, "NEED MORE DATA TO OPEN DOOR", Play::cWhite, Play::CENTRE);
+		Play::DrawDebugText({ 2370, 220 }, "NEED MORE DATA TO OPEN DOOR");
 	}
 
 
@@ -405,12 +408,12 @@ void DrawObjectYFlipped(GameObject& obj)
 /*
 * RESET GAME 
 */
-void GameReset()
+void PlayerDeath()
 {
 	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
 	Point2D camPos = Play::GetCameraPosition();
 	obj_player.velocity.x = 0;
-	Play::SetSprite(obj_player, "die", 0.2);
+	Play::SetSprite(obj_player, "die", 0.2f);
 
 	if (Play::IsAnimationComplete(obj_player))
 	{
@@ -421,22 +424,30 @@ void GameReset()
 
 		if (Play::KeyPressed(VK_SPACE))
 		{
-			playerState = resetPlayerState;
-			obj_player.pos = playerState.startingPoint;
-			Play::SetCameraPosition({ 0, 0 });
-
-			gamePlayState = resetGame;
-			enemyState = resetEnemyState;
-
-			Play::DestroyGameObjectsByType(TYPE_ENEMY);
-			Play::DestroyGameObjectsByType(TYPE_MOLECULE);
-			Play::DestroyGameObjectsByType(TYPE_HEALTH);
-
-			CreateEnemies();
-			CreateCollectables();
+			GameReset();
 		}
 	}
 	
+}
+
+
+void GameReset()
+{
+	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
+
+	playerState = resetPlayerState;
+	obj_player.pos = playerState.startingPoint;
+	Play::SetCameraPosition({ 0, 0 });
+
+	gamePlayState = resetGame;
+	enemyState = resetEnemyState;
+
+	Play::DestroyGameObjectsByType(TYPE_ENEMY);
+	Play::DestroyGameObjectsByType(TYPE_MOLECULE);
+	Play::DestroyGameObjectsByType(TYPE_HEALTH);
+
+	CreateEnemies();
+	CreateCollectables();
 }
 
 

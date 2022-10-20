@@ -22,6 +22,8 @@ void CreateEnemies()
 
 		obj_enemy.velocity = { 2, 0 };
 		obj_enemy.pos.y = obj_platform.pos.y - Play::GetSpriteHeight("enemy") / 1.5f;
+
+		// Place enemy at random distance along platform
 		int init_distance = Play::RandomRoll(Play::GetSpriteWidth("platform")
 			- Play::GetSpriteWidth("enemy"));
 		obj_enemy.pos.x = obj_platform.pos.x + (Play::GetSpriteWidth("enemy") / 2) + init_distance;
@@ -31,16 +33,15 @@ void CreateEnemies()
 }
 
 
-
-
-
+//------------------------------------------------------------------------------
 void UpdateEnemies()
 {
 	std::vector<int> vEnemies = Play::CollectGameObjectIDsByType(TYPE_ENEMY);
+	bool hasEnemyBeenHit = false;
 
-	for (int id : vEnemies)
+	for (int id_enemy : vEnemies)
 	{
-		GameObject& obj_enemy = Play::GetGameObject(id);
+		GameObject& obj_enemy = Play::GetGameObject(id_enemy);
 		Play::SetSprite(obj_enemy, "enemy_idle", 0.333f);
 
 
@@ -59,14 +60,21 @@ void UpdateEnemies()
 		UpdateEnemyMovement(obj_enemy);
 
 		std::vector<int> vAmmo = Play::CollectGameObjectIDsByType(TYPE_AMMO);
-		for (int id : vAmmo)
+		for (int id_ammo : vAmmo)
 		{
-			GameObject& obj_ammo = Play::GetGameObject(id);
+			GameObject& obj_ammo = Play::GetGameObject(id_ammo);
+			// Breaks if enemy is hit when more than one ammo objects exist
 			if (Play::IsColliding(obj_ammo, obj_enemy))
 			{
-				Play::DestroyGameObject(id);
-				Play::DestroyGameObject(obj_enemy.GetId());
+				Play::DestroyGameObject(id_ammo);
+				hasEnemyBeenHit = true;
 			}
+		}
+
+		if (hasEnemyBeenHit)
+		{
+			Play::DestroyGameObject(id_enemy);
+			hasEnemyBeenHit = false;
 		}
 	}
 	
@@ -74,6 +82,7 @@ void UpdateEnemies()
 
 
 
+//------------------------------------------------------------------------------
 
 
 void UpdateEnemyMovement(GameObject& obj_enemy)
@@ -87,10 +96,13 @@ void UpdateEnemyMovement(GameObject& obj_enemy)
 		obj_enemy.velocity.x = -(obj_enemy.velocity.x);
 	}
 
-	if (Play::IsColliding(obj_enemy, obj_player)
-		&& playerState.playerHP > 0 && !playerState.hurt)
+	if (Play::IsColliding(obj_enemy, obj_player) && playerState.playerHP > 0 && 
+		!playerState.hurt && playerState.state != STATE_SWING)
 	{
 		playerState.playerHP -= 1;
 		gamePlayState.damage_timer = gamePlayState.stopwatch;
 	}
 }
+
+
+//------------------------------------------------------------------------------

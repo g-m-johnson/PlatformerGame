@@ -109,6 +109,10 @@ void DrawObjectYFlipped(GameObject&);
 
 
 
+void PlayerDeath();
+
 void GameReset();
+
+
 
 //------------------------------------------------------------------------------
