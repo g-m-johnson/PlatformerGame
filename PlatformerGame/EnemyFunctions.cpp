@@ -39,6 +39,8 @@ void UpdateEnemies()
 	std::vector<int> vEnemies = Play::CollectGameObjectIDsByType(TYPE_ENEMY);
 	bool hasEnemyBeenHit = false;
 
+	UpdateEnemyChunks();
+
 	for (int id_enemy : vEnemies)
 	{
 		GameObject& obj_enemy = Play::GetGameObject(id_enemy);
@@ -73,7 +75,9 @@ void UpdateEnemies()
 
 		if (hasEnemyBeenHit)
 		{
+			CreateEnemyChunks(obj_enemy);
 			Play::DestroyGameObject(id_enemy);
+			Play::PlayAudio("explosion.mp3");
 			hasEnemyBeenHit = false;
 		}
 	}
@@ -100,9 +104,49 @@ void UpdateEnemyMovement(GameObject& obj_enemy)
 		!playerState.hurt && playerState.state != STATE_SWING)
 	{
 		playerState.playerHP -= 1;
+		Play::PlayAudio("water-bleep.mp3");
 		gamePlayState.damage_timer = gamePlayState.stopwatch;
 	}
 }
 
 
 //------------------------------------------------------------------------------
+
+
+void CreateEnemyChunks(GameObject& obj_enemy)
+{
+	//looks better to create 'chunks' using a random angle rather than uniformly
+	//  every pi / 6
+	float i = 0.0f;
+	while(i <= 2*PLAY_PI)
+	{
+		int id = Play::CreateGameObject(TYPE_CHUNKS, { obj_enemy.pos }, 0, "purple_body");
+		GameObject& obj_chunk = Play::GetGameObject(id);
+
+		if (Play::RandomRoll(3) == 3)
+		{
+			Play::SetSprite(obj_chunk, "pink_body", 0.0f);
+		}
+
+		Play::SetGameObjectDirection(obj_chunk, 6, i );
+		obj_chunk.acceleration.y = 0.5f;
+
+		i += static_cast<float>(Play::RandomRoll(100)) / 100.0f;
+	}
+}
+
+void UpdateEnemyChunks()
+{
+	std::vector<int> vChunks = Play::CollectGameObjectIDsByType(TYPE_CHUNKS);
+	for (int id : vChunks)
+	{
+		GameObject& obj_chunk = Play::GetGameObject(id);
+		Play::UpdateGameObject(obj_chunk);
+		Play::DrawObject(obj_chunk);
+
+		if (!Play::IsVisible(obj_chunk))
+		{
+			Play::DestroyGameObject(id);
+		}
+	}
+}

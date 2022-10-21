@@ -16,6 +16,7 @@ enum GameObjectType
 	TYPE_HEALTH,
 	TYPE_DOOR,
 	TYPE_COMPUTER,
+	TYPE_CHUNKS,
 };
 
 enum CharacterState
@@ -108,8 +109,6 @@ void UpdateExitObjects();
 void DrawObjectYFlipped(GameObject&);
 
 
-
-void PlayerDeath();
 
 void GameReset();
 

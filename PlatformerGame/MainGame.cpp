@@ -8,8 +8,9 @@
 
 GamePlayState gamePlayState, resetGame;
 
-
+//------------------------------------------------------------------------------
 // MAIN
+
 void MainGameEntry(PLAY_IGNORE_COMMAND_LINE)
 {
 	Play::CreateManager(DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_SCALE);
@@ -131,7 +132,13 @@ void CreatePlatforms()
 		{2465, 360},
 		{3110, 400},
 		{3160, 665},
-		{3750, 293}
+		{3750, 293},
+		{4050, 462},
+		{4230, 462},
+		{4600, 630},
+		{4850, 500},
+		{5100, 350},
+		{4900, 150}
 	};
 	std::vector <int> vPlatforms(platformPositions.size());
 
@@ -179,7 +186,8 @@ void CreateAnchor()
 		{ 800, -10},
 		{2080, -10},
 		{2914, -10},
-		{3450, -10}
+		{3450, -10},
+		{4700, -10}
 	};
 	std::vector<int> vAnchors(anchorPositions.size());
 	int n = 0;
@@ -241,8 +249,11 @@ void CreateCollectables()
 	Play::SetSpriteOrigin("molecule", 36, 73);
 	std::vector<Point2D> moleculePositions
 	{
-		{1215, 600},
-		{3200, 600}
+		//{1215, 600},
+		//{3200, 600},
+		//{4980, 90},
+		//{4690, 590},
+		//{430, 120}
 	};
 	std::vector<int> vMolecules(moleculePositions.size());
 	int n = 0;
@@ -283,6 +294,7 @@ void UpdateCollectables()
 		if (Play::IsColliding(obj_player, obj_molecule))
 		{
 			Play::DestroyGameObject(id);
+			Play::PlayAudio("bleep.mp3");
 			playerState.playerXP++;
 		}
 	}
@@ -301,8 +313,9 @@ void UpdateCollectables()
 		Play::UpdateGameObject(obj_health);
 		Play::DrawObject(obj_health);
 
-		if (Play::IsColliding(obj_player, obj_health) && playerState.playerHP <= 100)
+		if (Play::IsColliding(obj_player, obj_health) && playerState.playerHP <= 3)
 		{
+			Play::PlayAudio("health.mp3");
 			Play::DestroyGameObject(id);
 			if (playerState.playerHP <= 2)
 			{
@@ -343,6 +356,9 @@ void UpdateExitObjects()
 	Play::UpdateGameObject(obj_computer);
 	Play::DrawObject(obj_computer);
 
+	std::vector<int> vMolecules = Play::CollectGameObjectIDsByType(TYPE_MOLECULE);
+
+
 	if (playerState.exitActive)
 	{
 		Play::DrawDebugText({ 2370, 200 }, "PRESS SPACEBAR TO INPUT DATA");
@@ -350,7 +366,7 @@ void UpdateExitObjects()
 	}
 	else
 	{
-		Play::DrawDebugText({ 2370, 220 }, "NEED MORE DATA TO OPEN DOOR");
+		Play::DrawDebugText({ 2370, 200 }, "NEED MORE DATA TO OPEN DOOR");
 	}
 
 
@@ -358,6 +374,7 @@ void UpdateExitObjects()
 		&& !hasCollided && Play::KeyPressed(VK_SPACE))
 	{
 		Play::SetSprite(obj_door, "door_strip", 0.2f);
+		Play::PlayAudio("door.mp3");
 		hasCollided = true;
 	}
 
@@ -408,27 +425,6 @@ void DrawObjectYFlipped(GameObject& obj)
 /*
 * RESET GAME 
 */
-void PlayerDeath()
-{
-	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
-	Point2D camPos = Play::GetCameraPosition();
-	obj_player.velocity.x = 0;
-	Play::SetSprite(obj_player, "die", 0.2f);
-
-	if (Play::IsAnimationComplete(obj_player))
-	{
-		obj_player.frame = 5;
-		obj_player.animSpeed = 0.0f;
-		Play::DrawFontText("132", "PRESS SPACEBAR TO RESTART",
-			{ (camPos.x + DISPLAY_WIDTH / 2), DISPLAY_HEIGHT / 2 }, Play::CENTRE);
-
-		if (Play::KeyPressed(VK_SPACE))
-		{
-			GameReset();
-		}
-	}
-	
-}
 
 
 void GameReset()

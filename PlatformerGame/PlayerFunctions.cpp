@@ -14,14 +14,21 @@ void UpdatePlayer()
 	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
 	std::vector<int> vAnchors = Play::CollectGameObjectIDsByType(TYPE_ANCHORPOINT);
 
-	if (obj_player.pos.x >= (DISPLAY_WIDTH/2))
+	if (obj_player.pos.x >= (DISPLAY_WIDTH/2) && obj_player.pos.x <= (5300 - DISPLAY_WIDTH/2))
 	{
 		Play::SetCameraPosition({ obj_player.pos.x - (DISPLAY_WIDTH / 2), 0 });
 	}
-	else
+	if (obj_player.pos.x >= 5300 - (DISPLAY_WIDTH / 2))
+	{
+		Play::SetCameraPosition({ 5300 - DISPLAY_WIDTH, 0 });
+	}
+	if(obj_player.pos.x < DISPLAY_WIDTH/2)
 	{
 		Play::SetCameraPosition({ 0, 0 });
 	}
+	
+
+
 
 	if (playerState.state != STATE_DEAD && 
 		Play::IsLeavingDisplayArea(obj_player, Play::VERTICAL) && obj_player.pos.y > 700)
@@ -63,6 +70,7 @@ void UpdatePlayer()
 			if (Play::IsColliding(obj_player, obj_anchor) && Play::KeyPressed(VK_SPACE))
 			{
 				playerState.state = STATE_SWING;
+				Play::PlayAudio("jump.mp3");
 				gamePlayState.noteObjectId = id;
 			}
 		}
@@ -227,11 +235,18 @@ bool PlayerAndPlatformCollision()
 		if (platform_xmin < player_xmax && platform_xmax > player_xmin &&
 			platform_ymin < player_ymax && platform_ymax > player_ymin)
 		{
-			obj_player.acceleration.y = 0;
-			obj_player.velocity.y = 0;
-			obj_player.pos.y = obj_platform.pos.y - (Play::GetSpriteHeight("walk") / 2) + 5;
-			onPlatform = true;
-			break;
+			if (obj_player.velocity.y >= 0)
+			{
+				obj_player.acceleration.y = 0;
+				obj_player.velocity.y = 0;
+				obj_player.pos.y = obj_platform.pos.y - (Play::GetSpriteHeight("walk") / 2) + 5;
+				onPlatform = true;
+			}
+			else 
+			{
+				obj_player.acceleration.y = 0.5;
+				obj_player.velocity.y = -obj_player.velocity.y;
+			}
 		}
 	}
 	return onPlatform;
@@ -305,6 +320,8 @@ void SwingMechanic()
 		}
 	}
 }
+
+
 
 //------------------------------------------------------------------------------
 /*
@@ -401,13 +418,6 @@ void AimProjectile()
 
 }
 
-
-Point2D DrawTarget(float angle)
-{
-	return { 0, 0 };
-}
-
-
 void UpdateAmmo()
 {
 	std::vector<int> vAmmo = Play::CollectGameObjectIDsByType(TYPE_AMMO);
@@ -430,3 +440,24 @@ void UpdateAmmo()
 //------------------------------------------------------------------------------
 
 
+void PlayerDeath()
+{
+	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
+	Point2D camPos = Play::GetCameraPosition();
+	obj_player.velocity.x = 0;
+	Play::SetSprite(obj_player, "die", 0.2f);
+
+	if (Play::IsAnimationComplete(obj_player))
+	{
+		obj_player.frame = 5;
+		obj_player.animSpeed = 0.0f;
+		Play::DrawFontText("132", "PRESS SPACEBAR TO RESTART",
+			{ (camPos.x + DISPLAY_WIDTH / 2), DISPLAY_HEIGHT / 2 }, Play::CENTRE);
+
+		if (Play::KeyPressed(VK_SPACE))
+		{
+			GameReset();
+		}
+	}
+
+}
