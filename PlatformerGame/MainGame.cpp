@@ -249,11 +249,11 @@ void CreateCollectables()
 	Play::SetSpriteOrigin("molecule", 36, 73);
 	std::vector<Point2D> moleculePositions
 	{
-		//{1215, 600},
-		//{3200, 600},
-		//{4980, 90},
-		//{4690, 590},
-		//{430, 120}
+		{1215, 600},
+		{3200, 600},
+		{4980, 90},
+		{4690, 590},
+		{430, 120}
 	};
 	std::vector<int> vMolecules(moleculePositions.size());
 	int n = 0;
