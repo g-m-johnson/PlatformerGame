@@ -31,11 +31,13 @@ void UpdatePlayer()
 
 
 	if (playerState.state != STATE_DEAD && 
-		Play::IsLeavingDisplayArea(obj_player, Play::VERTICAL) && obj_player.pos.y > 700)
+		Play::IsLeavingDisplayArea(obj_player, Play::VERTICAL) && 
+		obj_player.pos.y > 700)
 	{
 		playerState.playerHP = 0;
 	}
-	if (playerState.playerHP == 0)
+
+	if (playerState.playerHP <= 0)
 	{
 		playerState.state = STATE_DEAD;
 	}
@@ -124,6 +126,7 @@ void UpdatePlayer()
 			if (Play::KeyPressed(VK_SPACE))
 			{
 				GameReset();
+				playerVisible = true;
 			}
 		}
 		break;
@@ -138,6 +141,7 @@ void UpdatePlayer()
 	{
 		Play::DrawObject(obj_player);
 	}
+
 
 	Play::UpdateGameObject(obj_player);
 }
@@ -193,8 +197,8 @@ void HandlePlayerControls()
 	}
 
 	
-	if (gamePlayState.damage_timer >= 2. && 
-		gamePlayState.stopwatch - gamePlayState.damage_timer <= 2.)
+	if (gamePlayState.damage_timer >= 2.0f && 
+		gamePlayState.stopwatch - gamePlayState.damage_timer <= 2.0f)
 	{
 		playerState.hurt = true;
 	}
@@ -444,8 +448,13 @@ void PlayerDeath()
 {
 	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
 	Point2D camPos = Play::GetCameraPosition();
-	obj_player.velocity.x = 0;
 	Play::SetSprite(obj_player, "die", 0.2f);
+	obj_player.velocity.x = 0.0f;
+
+	if (!Play::IsVisible)
+	{
+		obj_player.velocity.y = 0.0f;
+	}
 
 	if (Play::IsAnimationComplete(obj_player))
 	{

@@ -67,22 +67,27 @@ int MainGameExit(void)
 void HandleUI()
 {
 	Point2D camPos = Play::GetCameraPosition();
+
+	// displays the amount of lives you have left
 	std::vector<Point2D> vHearts
 	{
 		{camPos.x + 120, camPos.y + 50},
 		{camPos.x + 170, camPos.y + 50},
 		{camPos.x + 220, camPos.y + 50}
 	};
-
 	Play::DrawFontText("64", "LIVES: ", { camPos.x + 20, camPos.y + 50 });
-
 	for (int i = 0; i < playerState.playerHP; i++)
 	{
 		Play::DrawSprite("heart", vHearts.at(i), 0);
 	}
 
+	// counts number of data you still need to collect
+	std::vector<int> vData = Play::CollectGameObjectIDsByType(TYPE_MOLECULE);
+	Play::DrawSprite("molecule_UI", { camPos.x + DISPLAY_WIDTH - 50, camPos.y + 50 }, 0);
+	Play::DrawFontText("64", std::to_string(vData.size()), { camPos.x + 1170 , 50}, Play::CENTRE);
 
-	Play::DrawFontText("64", "PRESS C TO VIEW CONTROLS", { camPos.x + DISPLAY_WIDTH - 20, camPos.y + 50 }, Play::RIGHT);
+	// view controls
+	Play::DrawFontText("64", "PRESS C TO VIEW CONTROLS", { camPos.x + 1270, 690 }, Play::RIGHT);
 }
 
 void ControlScreen()
@@ -259,7 +264,7 @@ void CreateCollectables()
 	int n = 0;
 	for (int id : vMolecules)
 	{
-		id = Play::CreateGameObject(TYPE_MOLECULE, { 0, 0 }, 30, "molecule");
+		id = Play::CreateGameObject(TYPE_MOLECULE, { 0, 0 }, 30, "molecule_collect");
 		GameObject& obj_molecule = Play::GetGameObject(id);
 		obj_molecule.pos = moleculePositions.at(n);
 		n++;
@@ -299,9 +304,14 @@ void UpdateCollectables()
 		}
 	}
 
-	if (vMolecules.size() == 0)
+	
+	if (vMolecules.size() == 0 && playerState.state != STATE_DEAD)
 	{
 		playerState.exitActive = true;
+	}
+	else
+	{
+		playerState.exitActive = false;
 	}
 	
 
@@ -430,9 +440,12 @@ void DrawObjectYFlipped(GameObject& obj)
 void GameReset()
 {
 	GameObject& obj_player = Play::GetGameObjectByType(TYPE_PLAYER);
+	Play::SetSprite(obj_player, "scientist_idle", 0.2f);
 
-	playerState = resetPlayerState;
+	hasCollided = false;
+
 	obj_player.pos = playerState.startingPoint;
+	playerState = resetPlayerState;
 	Play::SetCameraPosition({ 0, 0 });
 
 	gamePlayState = resetGame;
@@ -441,9 +454,14 @@ void GameReset()
 	Play::DestroyGameObjectsByType(TYPE_ENEMY);
 	Play::DestroyGameObjectsByType(TYPE_MOLECULE);
 	Play::DestroyGameObjectsByType(TYPE_HEALTH);
+	Play::DestroyGameObjectsByType(TYPE_DOOR);
+	Play::DestroyGameObjectsByType(TYPE_COMPUTER);
 
 	CreateEnemies();
 	CreateCollectables();
+	CreateExitObjects();
+
+	playerState.state = STATE_IDLE;
 }
 
 
