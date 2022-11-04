@@ -451,7 +451,7 @@ void PlayerDeath()
 	Play::SetSprite(obj_player, "die", 0.2f);
 	obj_player.velocity.x = 0.0f;
 
-	if (!Play::IsVisible)
+	if (!Play::IsVisible(obj_player))
 	{
 		obj_player.velocity.y = 0.0f;
 	}
